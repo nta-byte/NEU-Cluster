@@ -4,10 +4,9 @@ data_preprocess_path: "data/neu-cls/images_preprocessed"
 le_path: "data/neu-cls/label_encoder.pickle" # label encoder model which converts string labels to integers.
 fc1_path: "data/neu-cls/features/{}_fc1_features_std_pytorch_{}.pickle"
 model: "VGG16" # "VGG16" "RESNET50"
-use_cache: False
+use_cache: True
 use_histeq: True
 image_size: 224
-kmeans_k_cache_path: ".neu_cache/kmeans_acc_vs_k_tmp.pickle"
 kmeans_n_init: 50
 pca_component: 30
 pca_whitten: True

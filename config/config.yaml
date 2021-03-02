@@ -1,6 +1,7 @@
 # general
-dataset: "neu-cls-64" # neu-cls or neu-cls-64
+dataset: "neu-cls" # neu-cls or neu-cls-64
 save_dir: "output_save"
+kmeans_k_cache_path: "kmeans_acc_vs_k.pickle"
 
 
 

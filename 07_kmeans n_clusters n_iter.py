@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
 
 import numpy as np
 from pathlib import Path
@@ -8,19 +7,13 @@ import seaborn as sns
 
 from scipy.stats import pearsonr
 
-import skimage
-from skimage.exposure import histogram
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import silhouette_samples
-
-import sys
 
 # sys.path.insert(0, '../')
-from helper import (classification_tools as ct,
-                    visualize as vis)
+from libs.helper import (classification_tools as ct)
 
 fc1_path = Path('data', 'features', 'VGG16_fc1_features_std.pickle')
 assert fc1_path.is_file()

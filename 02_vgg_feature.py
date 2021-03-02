@@ -2,15 +2,12 @@ import numpy as np
 import os
 from pathlib import Path
 import pickle
-import tensorflow as tf
 import tensorflow.keras as keras
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.vgg16 import preprocess_input
 
-import sys
-
 # sys.path.append('..')
-from helper.classification_tools import CustomLabelEncoder
+from libs.helper import CustomLabelEncoder
 
 img_root = Path('data', 'images_preprocessed', 'images_histeq_resize')  # directory where images are stored.
 assert img_root.is_dir()  # make sure directory exists and is properly found

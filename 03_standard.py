@@ -19,11 +19,8 @@ from sklearn.metrics import confusion_matrix, classification_report
 import skimage.io
 from scipy.spatial.distance import cdist
 
-import sys
-
 # sys.path.insert(0, '../')
-from helper import classification_tools as ct
-from helper import visualize as vis
+from libs.helper import classification_tools as ct, visualize as vis
 
 # fc1 features saved from the previous step
 fc1_path = Path('data', 'features', 'VGG16_fc1_features_std.pickle')
@@ -135,7 +132,7 @@ ax[1].set_title('hue: predicted labels')
 fig.tight_layout()
 plt.show()
 
-from helper import visualize as vis
+from libs.helper import visualize as vis
 
 # %%
 

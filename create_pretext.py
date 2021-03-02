@@ -2,15 +2,12 @@ import numpy as np
 import os
 from pathlib import Path
 import pickle
-import tensorflow as tf
 import tensorflow.keras as keras
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.vgg16 import preprocess_input
-import sys
-from helper.classification_tools import CustomLabelEncoder
+from libs.helper import CustomLabelEncoder
 
-from utils.yaml_config import yaml_config_hook
-from dataset.preprocess import get_list_files
+from libs.dataset.preprocess import get_list_files
 from create_pretext_pytorch import init
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"

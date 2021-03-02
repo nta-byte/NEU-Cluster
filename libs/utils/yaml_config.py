@@ -42,10 +42,12 @@ def init(config_path):
     use_histeq = "histeq" if args.use_histeq else "nohisteq"
     pca_whitten = "whitten" if args.pca_whitten else "nowhitten"
     args.fc1_path = args.fc1_path.format(args.model, use_histeq)
-    output_dir_name = "{}_{}_PCA{}_kmeanNinit{}_{}_{}_{}".format(args.model, dataset, args.pca_component,
+    output_dir_name = "{}_{}_PCA{}_kmeanNinit{}_{}_{}_{}".format(dataset, args.model, args.pca_component,
                                                                  args.kmeans_n_init, plf,
                                                                  use_histeq, pca_whitten)
     args.save_dir = os.path.join(args.save_dir, output_dir_name)
+
+    args.kmeans_k_cache_path = os.path.join(args.save_dir, args.kmeans_k_cache_path)
 
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
