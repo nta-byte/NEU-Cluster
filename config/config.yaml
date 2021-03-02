@@ -1,0 +1,6 @@
+# general
+dataset: "neu-cls-64" # neu-cls or neu-cls-64
+save_dir: "output_save"
+
+
+
