@@ -23,15 +23,15 @@ from scipy.spatial.distance import cdist
 from libs.helper import classification_tools as ct, visualize as vis
 
 # fc1 features saved from the previous step
-fc1_path = Path('data', 'features', 'VGG16_fc1_features_std.pickle')
-assert fc1_path.is_file()
+fc1_dir = Path('data', 'features', 'VGG16_fc1_features_std.pickle')
+assert fc1_dir.is_file()
 
 # label encoder model which converts string labels to integers.
 le_path = Path('models', 'label_encoder.pickle')
 assert le_path.is_file()
 
 # load the data and label encoder into memory
-with open(fc1_path, 'rb') as f:
+with open(fc1_dir, 'rb') as f:
     data = pickle.load(f)
 
 with open(le_path, 'rb') as f:

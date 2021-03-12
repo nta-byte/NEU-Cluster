@@ -8,7 +8,7 @@ import skimage.transform
 
 
 # pre-process pipeline- standard
-def pre_process_pipeline(inpath, outdir, eq_hist=True, include_parent_name=False):
+def pre_process_pipeline(inpath, outdir, eq_hist=True, include_parent_name=False, as_gray=False):
     """
     Preprocess images for standard analysis.
 
@@ -17,26 +17,26 @@ def pre_process_pipeline(inpath, outdir, eq_hist=True, include_parent_name=False
 
     Parameters
     -----------
-    inpath: str or Path object
+    :param include_parent_name:
+    :param inpath: str or Path object
         path to image to be pre-processed
-    outdir: str or Path object
+    :param outdir: str or Path object
         root directory to save image after pre-processing.
-    eq_hist: bool
+    :param eq_hist: bool
         if True, skimage.exposure.equalize_adapthist is applied before resizing.
         (Can be disabled for sensitivity analysis)
-
     Saved
     -------
     im_preprocessed: image
             image is saved to disk in outdir with the same filename and image format as the original image.
-            :param include_parent_name:
+
 
     """
     name = Path(inpath).name  # get the filename of the image
     if include_parent_name:
         name = inpath.parent.name + '_' + name
     # print(name)
-    im = skimage.io.imread(inpath, as_gray=True)  # read in image
+    im = skimage.io.imread(inpath, as_gray=as_gray)  # read in image
     im = skimage.img_as_float32(im)  # convert to float representation for histogram equalization
     if eq_hist:
         im = skimage.exposure.equalize_adapthist(im)  # histogram equalization
@@ -77,6 +77,11 @@ def get_list_files(dir_path, extensions=['bmp', 'jpg', 'png']):
 
 
 if __name__ == '__main__':
-    lists = get_list_files('/data4T/ntanh/data/neu_surface_defect/NEU-CLS')
+    list_test = get_list_files('/data4T/ntanh/data/mlcc/test')
+    print(len(list_test))
+    list_train = get_list_files('/data4T/ntanh/data/mlcc/train')
+    print(len(list_train))
+    list_valid = get_list_files('/data4T/ntanh/data/mlcc/valid')
+    print(len(list_valid))
     # print(lists[0].parent.name)
-    data_preprocess(lists, 'neu-cls', '../data')
+    data_preprocess(list_train, 'mlcc_train', '../../data/mlcc/')

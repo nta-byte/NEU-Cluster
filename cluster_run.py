@@ -2,60 +2,60 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 import os
-import seaborn as sns
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
-from sklearn.manifold import TSNE
 from sklearn.metrics import *
 
 from kneed import KneeLocator
 
 from libs.helper import classification_tools as ct
+from libs.helper.visualize import visual
 from libs.utils.yaml_config import init
 from create_pretext_pytorch import extract_feature
-
-
-def visual(y_pred, kmeans, le, x_nw, save_name, cluster):
-    tsne = TSNE(n_components=2, random_state=12214)
-    x_nw_tsne = tsne.fit_transform(x_nw)
-    cluster_mapper = {}
-    for p in np.unique(y_pred):
-        y_clusters = kmeans.labels_[y_pred == p]
-        for idx, value in enumerate(np.unique(y_clusters)):
-            cluster_mapper[value] = '{}-{}'.format(le.inverse_transform([p])[0], idx)
-    palette = np.concatenate((sns.color_palette('pastel', cluster), sns.color_palette('dark', cluster)), axis=0)
-    hue = [cluster_mapper[x] for x in kmeans.labels_]
-    hue_order = sorted(cluster_mapper.values(), key=lambda x: x.upper())
-
-    fig, ax = plt.subplots(dpi=300, figsize=(5, 5))
-    sns.scatterplot(x_nw_tsne[:, 0], x_nw_tsne[:, 1], hue=hue, hue_order=hue_order,
-                    palette=dict(zip(hue_order, palette)), ax=ax)
-    ax.legend(loc='upper center', bbox_to_anchor=(1, 1))
-    plt.savefig(save_name)
-    # plt.show()
 
 
 def get_optimal(logging, k_values, y, direction="decreasing", curve="convex", metric=''):
     x = k_values
     optimal = KneeLocator(x=x, y=y, curve=curve, direction=direction)
-    logging.info(f"{metric}: The optimal number of clusters: {optimal.knee} with an inertia of {optimal.knee_y}")
+    print(f"{metric}: The optimal number of clusters: {optimal.knee} with an inertia of {optimal.knee_y}")
 
 
-def print_optimal(logging, dict_data, metric):
+def print_optimal(logging, dict_data, metric='',args=None):
     dict_data = dict(sorted(dict_data.items(), key=lambda item: item[1]))
     optimal_cluster = [*dict_data][-1]
-    logging.info(
+    print(
         f"{metric}: The optimal number of clusters: {optimal_cluster} with an inertia of {dict_data[optimal_cluster]}")
+    sav_figure_name = "{}_.jpg".format(metric)
+    if args is not None:
+        sav_figure_name = os.path.join(args.save_dir, sav_figure_name)
+    sub_visual(dict_data, metric, save_name=sav_figure_name)
+
+
+def sub_visual(dict_in, title='', save_name=''):
+    # dict_in = dict(sorted(dict_in.keys(), key=lambda item: item[1]))
+    k_values, acc_k = [], []
+    for key in sorted(dict_in):
+        k_values.append(key)
+        acc_k.append(dict_in[key])
+    fig, ax = plt.subplots(dpi=200, figsize=(5, 4))
+    ax.plot(k_values, acc_k, '-bo')
+    # ax[1].plot(K, [np.median(x) for x in silhouettes], ':o')
+    ax.set_xticks(range(int(min(k_values)), int(max(k_values))+1, 1))
+    ax.set_xlabel('number of clusters')
+    ax.set_ylabel(title)
+    if not save_name:
+        save_name = title + '.jpg'
+    plt.savefig(save_name)
 
 
 def main():
     args, logging = init("config/config.yaml")
 
-    if os.path.exists(args.fc1_path) and os.path.exists(args.le_path):
+    if os.path.exists(args.fc1_dir) and os.path.exists(args.le_path):
         print()
     else:
         extract_feature(args, logging)
-    with open(args.fc1_path, 'rb') as f:
+    with open(args.fc1_dir, 'rb') as f:
         data = pickle.load(f)
     with open(args.le_path, 'rb') as f:
         le = pickle.load(f)
@@ -69,6 +69,7 @@ def main():
     dict_calinski_avg = {}
     dict_fow_avg = {}
     dict_adjusted_mutual_info = {}
+    dict_normalized_mutual_info = {}
     dict_adjusted_rand = {}
     if not args.use_cache or not os.path.isfile(args.kmeans_k_cache_path):
 
@@ -80,7 +81,7 @@ def main():
         if not args.pca_whitten:
             x = x_nw
 
-        k_values = np.arange(5, 15)
+        k_values = np.arange(3, 17)
         acc_k = np.zeros(k_values.shape)
         rs = np.random.RandomState(seed=987654321)
         kmeans_total = {}
@@ -114,18 +115,24 @@ def main():
             adjusted_mutual_info = round(float(adjusted_mutual_info), 3)
             dict_adjusted_mutual_info[k] = adjusted_mutual_info
 
+            normalized_mutual_info = normalized_mutual_info_score(y_gt, cluster_labels)
+            normalized_mutual_info = round(float(normalized_mutual_info), 3)
+            dict_normalized_mutual_info[k] = normalized_mutual_info
+
             adjusted_rand = adjusted_rand_score(y_gt, cluster_labels)
             adjusted_rand = round(float(adjusted_rand), 3)
             dict_adjusted_rand[k] = adjusted_rand
 
-            # logging.info(
-            #     "cluster: {} accuracy: {} silhouette: {} calinski:{} davies:{} fow:{} AMI:{} AR:{}".format(
-            #         k, acc_k[i], silhouette_avg, calinski_avg, davies_avg, fow_avg, adjusted_mutual_info,
-            #         adjusted_rand,
-            #     ))
             sav_figure_name = "{}_{}_.jpg".format(k, acc_k[i])
             sav_figure_name = os.path.join(args.save_dir, sav_figure_name)
             visual(y_pred_, kmeans, le, x_nw, sav_figure_name, k)
+            print(
+                "cluster: {} accuracy: {} silhouette: {} calinski:{} davies:{} fow:{} AMI:{} NMI:{} AR:{}".format(
+                    k, acc_k[i], list_silhouette[i], dict_calinski_avg[k], list_davies_avg[i], dict_fow_avg[k],
+                    dict_adjusted_mutual_info[k],
+                    dict_normalized_mutual_info[k],
+                    dict_adjusted_rand[k],
+                ))
 
         with open(args.kmeans_k_cache_path, 'wb') as f:
             pickle.dump({
@@ -135,6 +142,7 @@ def main():
                 'list_silhouette': list_silhouette,
                 'dict_adjusted_rand': dict_adjusted_rand,
                 'dict_adjusted_mutual_info': dict_adjusted_mutual_info,
+                'dict_normalized_mutual_info': dict_normalized_mutual_info,
                 'list_davies_avg': list_davies_avg,
                 'dict_fow_avg': dict_fow_avg,
                 'dict_calinski_avg': dict_calinski_avg
@@ -148,23 +156,25 @@ def main():
             dict_calinski_avg = results_['dict_calinski_avg']
             dict_adjusted_rand = results_['dict_adjusted_rand']
             dict_adjusted_mutual_info = results_['dict_adjusted_mutual_info']
+            dict_normalized_mutual_info = results_['dict_normalized_mutual_info']
             list_davies_avg = results_['list_davies_avg']
             dict_fow_avg = results_['dict_fow_avg']
 
     for i, k in enumerate(k_values):
         logging.info(
-            "cluster: {} accuracy: {} silhouette: {} calinski:{} davies:{} fow:{} AMI:{} AR:{}".format(
+            "cluster: {} accuracy: {} silhouette: {} calinski:{} davies:{} fow:{} AMI:{} NMI:{} AR:{}".format(
                 k, acc_k[i], list_silhouette[i], dict_calinski_avg[k], list_davies_avg[i], dict_fow_avg[k],
                 dict_adjusted_mutual_info[k],
+                dict_normalized_mutual_info[k],
                 dict_adjusted_rand[k],
             ))
 
     get_optimal(logging, k_values, list_davies_avg, metric='davies_bouldin_score')
-    print_optimal(logging, dict_calinski_avg, metric='calinski_harabasz_score')
-    print_optimal(logging, dict_fow_avg, metric='fowlkes_mallows_score')
-    print_optimal(logging, dict_adjusted_mutual_info, metric='adjusted_mutual_info_score')
-    print_optimal(logging, dict_adjusted_rand, metric='adjusted_rand_score')
-    # get_optimal(k_values, list_silhouette, metric='silhouette', curve='concave', direction="increasing")
+    print_optimal(logging, dict_calinski_avg, metric='calinski_harabasz_score', args=args)
+    print_optimal(logging, dict_fow_avg, metric='fowlkes_mallows_score', args=args)
+    print_optimal(logging, dict_adjusted_mutual_info, metric='adjusted_mutual_info_score', args=args)
+    print_optimal(logging, dict_normalized_mutual_info, metric='normalized_mutual_info_score', args=args)
+    print_optimal(logging, dict_adjusted_rand, metric='adjusted_rand_score', args=args)
 
 
 if __name__ == '__main__':

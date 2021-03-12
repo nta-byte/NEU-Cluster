@@ -38,13 +38,13 @@ def init(config_path):
     for k, v in config_dataset.items():
         parser.add_argument(f"--{k}", default=v, type=type(v))
     args = parser.parse_args()
-    plf = 'pytorch' if 'pytorch' in args.fc1_path else 'tf'
+    framework = 'pytorch' if args.framework == 'pytorch' else 'tf'
     use_histeq = "histeq" if args.use_histeq else "nohisteq"
     pca_whitten = "whitten" if args.pca_whitten else "nowhitten"
-    args.fc1_path = args.fc1_path.format(args.model, use_histeq)
-    output_dir_name = "{}_{}_PCA{}_kmeanNinit{}_{}_{}_{}".format(dataset, args.model, args.pca_component,
-                                                                 args.kmeans_n_init, plf,
-                                                                 use_histeq, pca_whitten)
+    pretrained = "pretrain" if args.pretrained_path else "transfer"
+    fc1_file_name = f'{args.model}_{pretrained}_fc1_features_std_{framework}_{use_histeq}.pickle'
+    args.fc1_dir = os.path.join(args.fc1_dir, fc1_file_name)
+    output_dir_name = f"{dataset}_{args.model}_{pretrained}_PCA{args.pca_component}_kmeanNinit{args.kmeans_n_init}_{framework}_{use_histeq}_{pca_whitten}"
     args.save_dir = os.path.join(args.save_dir, output_dir_name)
 
     args.kmeans_k_cache_path = os.path.join(args.save_dir, args.kmeans_k_cache_path)

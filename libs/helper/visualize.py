@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import skimage.io
+from sklearn.manifold import TSNE
+import seaborn as sns
 
 
 def pano_plot(x, y, paths, patch_size=(3, 3), ax0=None):
@@ -78,7 +80,7 @@ def pretty_cm(cm, labelnames, cscale=0.6, ax0=None, fs=6, cmap='cool'):
     None
     
     """
-    
+
     acc = cm.trace() / cm.sum()
     if ax0 is None:
         fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(2.5, 2.5), dpi=300)
@@ -89,12 +91,12 @@ def pretty_cm(cm, labelnames, cscale=0.6, ax0=None, fs=6, cmap='cool'):
     n = len(labelnames)
     ax.imshow(np.power(cm, cscale), cmap=cmap, extent=(0, n, 0, n))
     labelticks = np.arange(n) + 0.5
-    
+
     ax.set_xticks(labelticks, minor=True)
     ax.set_yticks(labelticks, minor=True)
     ax.set_xticklabels(['' for i in range(n)], minor=False, fontsize=fs)
     ax.set_yticklabels(['' for i in range(n)], minor=False, fontsize=fs)
-    
+
     ax.set_xticks(np.arange(n))
     ax.set_yticks(np.arange(n))
     ax.set_xticklabels(labels=labelnames, minor=True, fontsize=fs)
@@ -108,9 +110,28 @@ def pretty_cm(cm, labelnames, cscale=0.6, ax0=None, fs=6, cmap='cool'):
     ax.grid(which='major', color=np.ones(3) * 0.33, linewidth=1)
 
     if ax0 is None:
-        ax.set_title('Accuracy: {:.3f}'.format(cm.trace() / cm.sum()), fontsize=fs+2)
+        ax.set_title('Accuracy: {:.3f}'.format(cm.trace() / cm.sum()), fontsize=fs + 2)
         plt.show()
         return
     else:
         return ax
 
+
+def visual(y_pred, kmeans, le, x_nw, save_name, cluster):
+    tsne = TSNE(n_components=2, random_state=12214)
+    x_nw_tsne = tsne.fit_transform(x_nw)
+    cluster_mapper = {}
+    for p in np.unique(y_pred):
+        y_clusters = kmeans.labels_[y_pred == p]
+        for idx, value in enumerate(np.unique(y_clusters)):
+            cluster_mapper[value] = '{}-{}'.format(le.inverse_transform([p])[0], idx)
+    palette = np.concatenate((sns.color_palette('pastel', cluster), sns.color_palette('dark', cluster)), axis=0)
+    hue = [cluster_mapper[x] for x in kmeans.labels_]
+    hue_order = sorted(cluster_mapper.values(), key=lambda x: x.upper())
+
+    fig, ax = plt.subplots(dpi=300, figsize=(5, 5))
+    sns.scatterplot(x_nw_tsne[:, 0], x_nw_tsne[:, 1], hue=hue, hue_order=hue_order,
+                    palette=dict(zip(hue_order, palette)), ax=ax)
+    ax.legend(loc='upper center', bbox_to_anchor=(1, 1))
+    plt.savefig(save_name)
+    # plt.show()

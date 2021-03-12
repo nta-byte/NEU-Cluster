@@ -10,7 +10,7 @@ from libs.helper.classification_tools import CustomLabelEncoder
 from libs.utils.yaml_config import init
 from libs.dataset.preprocess import get_list_files
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 
 class Dataset(torch.utils.data.Dataset):
@@ -75,7 +75,14 @@ def extract_labels(f):
 
 
 def load_state(weight_path, net):
-    pretrained_dict = torch.load(weight_path)
+    # state_dict = torch.load(args.pretrained_path,
+    #                         map_location=lambda storage, loc: storage)
+    # # model.load_state_dict(torch.load(config.MODEL.PRETRAINED,
+    # #                                  map_location=lambda storage, loc: storage))
+    # model.load_state_dict(state_dict, strict=True)
+
+    pretrained_dict = torch.load(weight_path,
+                            map_location=lambda storage, loc: storage)
     model_dict = net.state_dict()
     pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
     model_dict.update(pretrained_dict)
@@ -85,13 +92,16 @@ def load_state(weight_path, net):
 
 def get_model(args):
     if args.model == 'RESNET50':
-        model = models.resnet.resnet50(pretrained=True)
+        model = models.resnet.resnet50(pretrained=False)
         model = nn.Sequential(*list(model.children())[:-1])
     elif args.model == 'VGG16':
         vgg16_path = '/home/ntanh/.cache/torch/checkpoints/vgg16-397923af.pth'
         model = models.vgg16(pretrained=True)
         model.classifier = nn.Sequential(*(list(model.classifier.children())[:1]))
-        model = load_state(vgg16_path, model)
+        # model = load_state(vgg16_path, model)
+    if args.pretrained_path:
+        print("load weight:",args.pretrained_path)
+        model = load_state(args.pretrained_path, model)
     return model
 
 
@@ -140,10 +150,10 @@ def extract_feature(args, logging):
                'layer_name': 'fc1'
                }
 
-    feature_dir = Path(args.fc1_path).parent
+    feature_dir = Path(args.fc1_dir).parent
 
     os.makedirs(feature_dir, exist_ok=True)
-    with open(Path(args.fc1_path), 'wb') as f:
+    with open(Path(args.fc1_dir), 'wb') as f:
         pickle.dump(results, f)
 
     print(fc1.shape)

@@ -15,13 +15,13 @@ from sklearn.metrics import confusion_matrix
 # sys.path.insert(0, '../')
 from libs.helper import (classification_tools as ct)
 
-fc1_path = Path('data', 'features', 'VGG16_fc1_features_std.pickle')
-assert fc1_path.is_file()
+fc1_dir = Path('data', 'features', 'VGG16_fc1_features_std.pickle')
+assert fc1_dir.is_file()
 
 le_path = Path('models', 'label_encoder.pickle')
 assert le_path.is_file()
 
-with open(fc1_path, 'rb') as f:
+with open(fc1_dir, 'rb') as f:
     data = pickle.load(f)
 
 with open(le_path, 'rb') as f:

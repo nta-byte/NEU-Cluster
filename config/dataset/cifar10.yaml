@@ -1,0 +1,39 @@
+# general
+dataset_dir: "/data4T/ntanh/data/stl10_binary/"
+data_preprocess_path: "data/mlcc/mlcc_train/images_preprocessed"
+le_path: "data/mlcc/mlcc_train/label_encoder.pickle" # label encoder model which converts string labels to integers.
+fc1_dir: "data/mlcc/mlcc_train/features"
+
+# cluster
+use_histeq: True
+kmeans_n_init: 500
+pca_component: 50
+pca_whitten: True
+
+
+
+# general
+seed: 42
+workers: 8
+
+
+# train options
+batch_size: 128
+image_size: 224
+start_epoch: 0
+epochs: 1000
+
+# model options
+framework: "pytorch" # pytorch or tf
+resnet: "ResNet50" # ResNet18 / ResNet34 / ResNet50
+model: "RESNET50" # "VGG16" "RESNET50"
+feature_dim: 128
+model_path: "save/STL-10"
+pretrained_path: "/data20.04/home/ntanh/SDC_SALa_Clustering/CODE/NEU-Cluster/training/output/mlcc/resnet50/train_20210305_1551/resnet50-Epoch-80-Loss-2.286-Acc-0.77.pth"
+reload: False
+
+# loss options
+learning_rate: 0.0003
+weight_decay: 0.
+instance_temperature: 0.5
+cluster_temperature: 1.0
