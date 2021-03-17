@@ -1,8 +1,16 @@
 # general
-dataset_dir: "/data4T/ntanh/data/stl10_binary/"
+dataset: "mlcc" # neu-cls or neu-cls-64
+save_dir: "output_save"
+save_img_1st_step_dir: "1st_step"
+
+
+kmeans_k_cache_path: "kmeans_acc_vs_k.pickle"
+use_cache: False
+
+# general
 data_preprocess_path: "data/mlcc/"
-le_path: "data/mlcc/label_encoder.pickle" # label encoder model which converts string labels to integers.
-fc1_dir: "data/mlcc/features"
+le_path: "label_encoder.pickle" # label encoder model which converts string labels to integers.
+fc1_dir: "raw_features"
 relabel_dir: "relabel"
 training_ouput_dir: "output_training"
 
@@ -15,7 +23,10 @@ k_min: 3
 k_max: 17
 
 
-
+# train options
+batch_size: 128
+image_size: 224
+cfg: "training/experiments/mlcc/resnet50.yaml"
 # general
 seed: 42
 workers: 8
@@ -29,9 +40,3 @@ feature_dim: 128
 model_path: "save/STL-10"
 pretrained_path: "/data20.04/home/ntanh/SDC_SALa_Clustering/CODE/NEU-Cluster/training/output/mlcc/resnet50/train_20210308_1457/resnet50-Epoch-10-Loss-1.028-Acc-0.81.pth"
 reload: False
-
-# loss options
-learning_rate: 0.0003
-weight_decay: 0.
-instance_temperature: 0.5
-cluster_temperature: 1.0

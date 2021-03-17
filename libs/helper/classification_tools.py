@@ -76,6 +76,9 @@ class CustomLabelEncoder:
 
         return int_labels
 
+    def update_mapper(self, mapper):
+        self.mapper = mapper
+
     def inverse_transform(self, int_labels):
         """
         Maps integer labels to original string labels.

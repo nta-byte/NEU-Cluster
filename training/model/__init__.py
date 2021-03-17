@@ -21,10 +21,19 @@ def get_model(config):
     elif config.MODEL.NAME == 'vgg16':
         model = models.vgg16(pretrained=pretrained)
         model.classifier[6] = nn.Linear(4096, n_class)
+
     if finetune:
-        state_dict = torch.load(finetune,
-                                map_location=lambda storage, loc: storage)
-        # model.load_state_dict(torch.load(config.MODEL.PRETRAINED,
-        #                                  map_location=lambda storage, loc: storage))
-        model.load_state_dict(state_dict, strict=True)
+        # state_dict = torch.load(finetune,
+        #                         map_location=lambda storage, loc: storage)
+        # # model.load_state_dict(torch.load(config.MODEL.PRETRAINED,
+        # #                                  map_location=lambda storage, loc: storage))
+        # model.load_state_dict(state_dict, strict=True)
+
+        pretrained_dict = torch.load(finetune,
+                                     map_location=lambda storage, loc: storage)
+        model_dict = model.state_dict()
+
+        pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
+        model_dict.update(pretrained_dict)
+        model.load_state_dict(model_dict)
     return model

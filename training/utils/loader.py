@@ -11,6 +11,13 @@ from imgaug import augmenters as iaa
 import imgaug as ia
 from sklearn import preprocessing
 from libs.dataset.preprocess import get_list_files
+from libs.helper.classification_tools import CustomLabelEncoder
+
+
+def onehot(array):
+    unique, inverse = np.unique(array, return_inverse=True)
+    onehot = np.eye(unique.shape[0])[inverse]
+    return onehot
 
 
 class ImgAugTransform:
@@ -66,37 +73,47 @@ class ImgAugTransform:
         return img_
 
 
-class DataLoader(torch.utils.data.Dataset):
-    def __init__(self, data_dir, transform=None, augment=None, le=None):
+class Dataset(torch.utils.data.Dataset):
+    def __init__(self, data_dir=None, transform=None, augment=None, le=None, label_file=None):
         self.transform = transform
         self.augment = augment
         self.imgList = []
         self.dataList = []
-
-        lf = get_list_files(Path(data_dir))
-        for line in lf:
-            # sep = line.rstrip('\n').split(',')
-            # img_path = sep[0]
-            # name = inpath.parent.name + '_' + name
-            if os.path.exists(line):
-                ldata = line.parent.name
-                # print(name)
-                # ldata = name.stem.split('_')[0]
-                # ldata = list(map(int, ldata))
-                self.imgList.append(str(line))
-                self.dataList.append(ldata)
-        # print(self.dataList)
+        if label_file:
+            lf = open(label_file, 'r')
+            for line in lf:
+                sep = line.rstrip('\n').split(',')
+                img_path = sep[0]
+                if os.path.exists(img_path):
+                    ldata = sep[1]
+                    # ldata = list(map(int, ldata))
+                    self.imgList.append(img_path)
+                    self.dataList.append(ldata)
+        else:
+            lf = get_list_files(Path(data_dir))
+            for line in lf:
+                # sep = line.rstrip('\n').split(',')
+                # img_path = sep[0]
+                # name = inpath.parent.name + '_' + name
+                if os.path.exists(line):
+                    ldata = line.parent.name
+                    # print(name)
+                    # ldata = name.stem.split('_')[0]
+                    # ldata = list(map(int, ldata))
+                    self.imgList.append(str(line))
+                    self.dataList.append(ldata)
+        print(self.dataList)
         if le is None:
-            self.le = preprocessing.LabelEncoder()
+            self.le = CustomLabelEncoder()
             self.le.fit(self.dataList)
         else:
             self.le = le
         self.dataList_transformed = self.le.transform(self.dataList)
-        print(list(self.le.classes_))
-        print(self.dataList_transformed)
+        # print(list(self.le.classes_))
+        # print(self.dataList_transformed)
         b = np.zeros((self.dataList_transformed.size, self.dataList_transformed.max() + 1))
         b[np.arange(self.dataList_transformed.size), self.dataList_transformed] = 1
-        print(b)
+        # print(b)
         self.dataList_transformed = b
 
     def __getitem__(self, index):

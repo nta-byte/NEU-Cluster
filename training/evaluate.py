@@ -16,7 +16,7 @@ import torchvision.transforms as transforms
 from sklearn import preprocessing
 from imgaug import augmenters as iaa
 
-from training.utils.loader import DataLoader, NewPad, data_loader_idcard, ImgAugTransform
+from training.utils.loader import Dataset, NewPad, data_loader_idcard, ImgAugTransform
 from training.model import get_model
 from training.utils.core import train_step, evaluation
 from training.config import update_config, config
@@ -69,7 +69,7 @@ def train():
         normalize])
     le = preprocessing.LabelEncoder()
     le.fit(['1', '2', '3', '4', '5', '6', '7', '8', '9', 'etc'])
-    test_dataset = DataLoader(
+    test_dataset = Dataset(
         data_dir=config.DATASET.TEST_DIR,
         transform=transform_test, augment=None, le=le)
 

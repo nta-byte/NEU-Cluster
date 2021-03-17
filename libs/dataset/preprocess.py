@@ -76,7 +76,7 @@ def get_list_files(dir_path, extensions=['bmp', 'jpg', 'png']):
     return files
 
 
-if __name__ == '__main__':
+def mlcc_data_preprocess():
     list_test = get_list_files('/data4T/ntanh/data/mlcc/test')
     print(len(list_test))
     list_train = get_list_files('/data4T/ntanh/data/mlcc/train')
@@ -84,4 +84,10 @@ if __name__ == '__main__':
     list_valid = get_list_files('/data4T/ntanh/data/mlcc/valid')
     print(len(list_valid))
     # print(lists[0].parent.name)
-    data_preprocess(list_train, 'mlcc_train', '../../data/mlcc/')
+    data_preprocess(list_train, 'train', '../../data/mlcc/')
+    data_preprocess(list_test, 'test', '../../data/mlcc/')
+    data_preprocess(list_valid, 'valid', '../../data/mlcc/')
+
+
+if __name__ == '__main__':
+    mlcc_data_preprocess()

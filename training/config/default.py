@@ -36,11 +36,12 @@ _C.DATASET = CN()
 _C.DATASET.ROOT = ''
 _C.DATASET.DATASET = 'rotation_corrector'
 _C.DATASET.NUM_CLASSES = 2
-_C.DATASET.TRAIN_LIST = 'list/cityscapes/train.lst'
-_C.DATASET.TEST_LIST = 'list/cityscapes/val.lst'
-_C.DATASET.TRAIN_DIR = 'list/cityscapes/train.lst'
-_C.DATASET.TEST_DIR = 'list/cityscapes/val.lst'
-_C.DATASET.VAL_DIR = 'list/cityscapes/val.lst'
+_C.DATASET.TRAIN_LIST = ''
+_C.DATASET.TEST_LIST = ''
+_C.DATASET.VAL_LIST = ''
+_C.DATASET.TRAIN_DIR = ''
+_C.DATASET.TEST_DIR = ''
+_C.DATASET.VAL_DIR = ''
 
 # training
 _C.TRAIN = CN()
@@ -77,7 +78,7 @@ def update_config(cfg, args):
     cfg.merge_from_file(args.cfg)
     # cfg.merge_from_list(args.opts)
 
-    cfg.freeze()
+    # cfg.freeze()
 
 
 if __name__ == '__main__':

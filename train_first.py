@@ -5,6 +5,7 @@ from datetime import datetime
 import argparse
 import numpy as np
 from PIL import Image
+import pickle
 
 import torch
 import torch.nn as nn
@@ -16,35 +17,41 @@ import torchvision.transforms as transforms
 from imgaug import augmenters as iaa
 
 from training.model import get_model
-from training.utils.loader import Dataset, NewPad, data_loader_idcard, ImgAugTransform
+# from training.utils.loader import DataLoader, NewPad, data_loader_idcard, ImgAugTransform
 from training.utils.core import train_step, evaluation
 from training.utils.optimizer import get_optimizer
 from training.config import update_config, config
+from libs.utils.yaml_config import init
+from libs.dataset import DataPreprocess
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Train segmentation network')
+    args, logging = init("experiments/cifar10/resnet50.yaml")
 
-    parser.add_argument('--cfg',
-                        help='experiment configure file name',
-                        default='experiments/mlcc/resnet50.yaml',
-                        type=str)
-
-    args = parser.parse_args()
     update_config(config, args)
 
-    return args
+    return args, config
 
 
 def train():
-    args = parse_args()
+    args, config = parse_args()
+    clusters = 10
+    config.defrost()
+    config.DATASET.NUM_CLASSES = clusters
+    config.DATASET.TRAIN_LIST = os.path.join(args.relabel_dir, str(clusters) + '_train.txt')
+    config.DATASET.VAL_LIST = os.path.join(args.relabel_dir, str(clusters) + '_valid.txt')
+    config.MODEL.PRETRAINED = False
+    # config.freeze()
 
     # Init save dir
-    save_dir_root = os.path.join(config.OUTPUT_DIR)
-    save_dir = os.path.join(save_dir_root, config.DATASET.DATASET, config.MODEL.NAME,
-                            'train_' + datetime.now().strftime('%Y%m%d_%H%M'))
+    save_dir_root = args.training_ouput_dir
+    save_dir = os.path.join(save_dir_root,
+                            f'train_{clusters}_cluster')
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
+
+    # with open(args.le_path, 'rb') as f:
+    #     le = pickle.load(f)
     # Init logging
     logname = os.path.join(save_dir, 'log_train.txt')
     handlers = [logging.FileHandler(logname), logging.StreamHandler(sys.stdout)]
@@ -55,53 +62,16 @@ def train():
     logging.info(args)
     logging.info(config)
 
-
     # Device configuration
     device = torch.device('cuda:{}'.format(config.GPUS))
 
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    transform_train = transforms.Compose([
-        # transforms.ColorJitter(brightness=(0.2, 2),
-        #                        contrast=(0.3, 2),
-        #                        saturation=(0.2, 2),
-        #                        hue=(-0.3, 0.3)),
-        transforms.Resize((config.TRAIN.IMAGE_SIZE[0], config.TRAIN.IMAGE_SIZE[1]), interpolation=Image.NEAREST),
-        transforms.ToTensor(),
-        normalize
-    ])
-
-    transform_val = transforms.Compose([
-        transforms.Resize((config.TRAIN.IMAGE_SIZE[0], config.TRAIN.IMAGE_SIZE[1]), interpolation=Image.NEAREST),
-        # transforms.ColorJitter(brightness=(0.2, 2),
-        #                        contrast=(0.3, 2),
-        #                        saturation=(0.2, 2),
-        #                        hue=(-0.3, 0.3)),
-        transforms.ToTensor(),  # 3*H*W, [0, 1]
-        normalize])
-
-    train_dataset = Dataset(
-        data_dir=config.DATASET.TRAIN_DIR,
-        transform=transform_train, augment=None)
-
-    le = train_dataset.le
-
-    val_dataset = Dataset(
-        data_dir=config.DATASET.VAL_DIR,
-        transform=transform_val, augment=None, le=le)
-
-    # Data loader
-    train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
-                                               batch_size=config.TRAIN.BATCH_SIZE,
-                                               num_workers=config.WORKERS,
-                                               shuffle=True)
-
-    val_loader = torch.utils.data.DataLoader(dataset=val_dataset,
-                                             batch_size=config.TEST.BATCH_SIZE,
-                                             num_workers=config.WORKERS,
-                                             shuffle=False)
+    data_preprocess = DataPreprocess(config, args)
+    train_loader, val_loader = data_preprocess.train_loader, data_preprocess.val_loader
+    # mapper = data_preprocess.classes
     classNum = config.DATASET.NUM_CLASSES
-    print(classNum)
+    # print(classNum)
     model = get_model(config)
+    # print(model)
     model = model.to(device)
     if config.MODEL.PRETRAINED:
         logging.info(f"Finetune from the model {config.MODEL.PRETRAINED}")
@@ -111,14 +81,14 @@ def train():
     optimizer = get_optimizer(config, model)
 
     criterion = nn.CrossEntropyLoss()
-
+    # print(mapper)
     # Train the model
     total_step = len(train_loader)
-    steps = total_step*2
+    # steps = total_step * 2
     # scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, steps)
     # scheduler = torch.optim.lr_scheduler.CyclicLR(optimizer, base_lr=0.001, max_lr=0.1, step_size_up=5,
     #                                               mode="exp_range", gamma=0.85)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=.995)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=.9995)
     max_acc = 0
     max_acc_epoch = 0
     min_loss = 1e7
@@ -128,10 +98,11 @@ def train():
         train_step(train_loader, model, criterion, optimizer, device, total_step, logging=logging, config=config,
                    epo=epoch,
                    debug_steps=config.TRAIN.PRINT_FREQ,
-                   scheduler=scheduler)
+                   # scheduler=scheduler
+                   )
         if epoch % config.TRAIN.VALIDATION_EPOCH == 0 or epoch == config.TRAIN.END_EPOCH - 1:
             val_result = evaluation(val_loader, model, criterion, device, classNum=classNum, logging=logging,
-                                    le=list(le.classes_))
+                                    le=data_preprocess.classes)
             val_loss = val_result['loss']
             val_acc = val_result['acc']
             if val_acc > max_acc or val_loss < min_loss:

@@ -17,13 +17,13 @@ from create_pretext_pytorch import extract_feature
 def get_optimal(logging, k_values, y, direction="decreasing", curve="convex", metric=''):
     x = k_values
     optimal = KneeLocator(x=x, y=y, curve=curve, direction=direction)
-    print(f"{metric}: The optimal number of clusters: {optimal.knee} with an inertia of {optimal.knee_y}")
+    logging.info(f"{metric}: The optimal number of clusters: {optimal.knee} with an inertia of {optimal.knee_y}")
 
 
 def print_optimal(logging, dict_data, metric='',args=None):
     dict_data = dict(sorted(dict_data.items(), key=lambda item: item[1]))
     optimal_cluster = [*dict_data][-1]
-    print(
+    logging.info(
         f"{metric}: The optimal number of clusters: {optimal_cluster} with an inertia of {dict_data[optimal_cluster]}")
     sav_figure_name = "{}_.jpg".format(metric)
     if args is not None:
@@ -49,18 +49,18 @@ def sub_visual(dict_in, title='', save_name=''):
 
 
 def main():
-    args, logging = init("config/config.yaml")
+    args, logging = init("experiments/cifar10/resnet50.yaml")
 
     if os.path.exists(args.fc1_dir) and os.path.exists(args.le_path):
         print()
     else:
         extract_feature(args, logging)
-    with open(args.fc1_dir, 'rb') as f:
+    with open(args.fc1_path, 'rb') as f:
         data = pickle.load(f)
     with open(args.le_path, 'rb') as f:
         le = pickle.load(f)
 
-    files = data['filename']  # file paths to each image
+    # files = data['filename']  # file paths to each image
     fc1 = data['features']  # array containing fc1 features for each file
     labels = data['labels']  # string labels for each image
 
@@ -124,8 +124,8 @@ def main():
             dict_adjusted_rand[k] = adjusted_rand
 
             sav_figure_name = "{}_{}_.jpg".format(k, acc_k[i])
-            sav_figure_name = os.path.join(args.save_dir, sav_figure_name)
-            visual(y_pred_, kmeans, le, x_nw, sav_figure_name, k)
+            sav_figure_name = os.path.join(args.save_img_1st_step_dir, sav_figure_name)
+            visual(y_pred_, kmeans, le, x, sav_figure_name, k)
             print(
                 "cluster: {} accuracy: {} silhouette: {} calinski:{} davies:{} fow:{} AMI:{} NMI:{} AR:{}".format(
                     k, acc_k[i], list_silhouette[i], dict_calinski_avg[k], list_davies_avg[i], dict_fow_avg[k],
