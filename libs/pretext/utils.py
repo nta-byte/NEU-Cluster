@@ -110,7 +110,9 @@ def get_data_list(args):
         files += _get_list_files(os.path.join(args.data_preprocess_path, 'test', 'images_preprocessed'),
                                  args.use_histeq)
     else:
-        files = _get_list_files(args.data_preprocess_path, args.use_histeq)
+        files = _get_list_files(os.path.join(args.data_preprocess_path, 'images_preprocessed'),
+                                args.use_histeq)
+        # files = _get_list_files(args.data_preprocess_path, args.use_histeq)
     print(len(files))
     # ## Shuffle the filenames so they appear randomly in the dataset.
     rs = np.random.RandomState(seed=749976)

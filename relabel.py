@@ -24,6 +24,32 @@ def write_csv(file_name, data_out):
             writer.writerow([date, value])
 
 
+def relabel(kmeans, labels_unmatched_, y_gt, le):
+    y_pred_ = ct.label_matcher(labels_unmatched_, y_gt)
+    cluster_mapper = {}
+    for p in np.unique(y_pred_):
+        y_clusters = kmeans.labels_[y_pred_ == p]
+        for idx, value in enumerate(np.unique(y_clusters)):
+            cluster_mapper['{}-{}'.format(le.inverse_transform([p])[0], idx)] = value
+    new_le = ct.CustomLabelEncoder()
+    new_le.update_mapper(cluster_mapper)
+    y_pred_2_label = new_le.inverse_transform(labels_unmatched_)
+    out_dict_train = []
+    out_dict_test = []
+    out_dict_valid = []
+    for i, l in enumerate(files):
+        if 'train' in str(files[i]):
+            out_dict_train.append({'file_path': files[i], 'label': y_pred_2_label[i]})
+        elif 'test' in str(files[i]):
+            out_dict_test.append({'file_path': files[i], 'label': y_pred_2_label[i]})
+        elif 'valid' in str(files[i]):
+            out_dict_valid.append({'file_path': files[i], 'label': y_pred_2_label[i]})
+
+    write_csv(os.path.join(args.relabel_dir, str(k) + '_train.txt'), out_dict_train)
+    write_csv(os.path.join(args.relabel_dir, str(k) + '_test.txt'), out_dict_test)
+    write_csv(os.path.join(args.relabel_dir, str(k) + '_valid.txt'), out_dict_valid)
+
+
 def main():
     args, logging = init("experiments/mlcc/resnet50.yaml")
 
@@ -55,28 +81,15 @@ def main():
 
         kmeans_total[i] = kmeans
         labels_unmatched_ = kmeans.fit_predict(x)
-        print('cluster_labels', labels_unmatched_)
-        # labels_unmatched_ = kmeans.labels_
         y_pred_ = ct.label_matcher(labels_unmatched_, y_gt)
-        print('y_pred_', np.unique(y_pred_), y_pred_)
         cluster_mapper = {}
         for p in np.unique(y_pred_):
             y_clusters = kmeans.labels_[y_pred_ == p]
-            # print('y_clusters', y_clusters)
             for idx, value in enumerate(np.unique(y_clusters)):
                 cluster_mapper['{}-{}'.format(le.inverse_transform([p])[0], idx)] = value
-        print('cluster_mapper', cluster_mapper)
-        # acc = (y_pred_ == y_gt).sum() / len(y_gt)
-        # acc_k[i] = round(acc, 3)
-        # print(le.inverse_transform(y_pred_))
-        # print(zip(files, le.inverse_transform(y_pred_)))
         new_le = ct.CustomLabelEncoder()
-        # new_le.mapper =
-        print('old mapper ', le.mapper)
         new_le.update_mapper(cluster_mapper)
         y_pred_2_label = new_le.inverse_transform(labels_unmatched_)
-        print("y_pred_2_label", y_pred_2_label)
-        # print(files[0], le.inverse_transform(y_pred_)[0])
         out_dict_train = []
         out_dict_test = []
         out_dict_valid = []

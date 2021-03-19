@@ -1,7 +1,7 @@
 import os
 import cv2
 import torch
-from torch.utils.data import Dataset
+# from torch.utils.data import Dataset
 from torchvision.transforms.functional import pad
 import numbers
 from pathlib import Path
@@ -74,7 +74,7 @@ class ImgAugTransform:
 
 
 class Dataset(torch.utils.data.Dataset):
-    def __init__(self, data_dir=None, transform=None, augment=None, le=None, label_file=None):
+    def __init__(self, data_dir=None, transform=None, augment=None, le=None, label_file=None, label_list=None):
         self.transform = transform
         self.augment = augment
         self.imgList = []
@@ -87,6 +87,14 @@ class Dataset(torch.utils.data.Dataset):
                 if os.path.exists(img_path):
                     ldata = sep[1]
                     # ldata = list(map(int, ldata))
+                    self.imgList.append(img_path)
+                    self.dataList.append(ldata)
+        elif label_list:
+            for line in label_list:
+                sep = line
+                img_path = sep[0]
+                if os.path.exists(img_path):
+                    ldata = sep[1]
                     self.imgList.append(img_path)
                     self.dataList.append(ldata)
         else:

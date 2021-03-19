@@ -31,15 +31,16 @@ class DataPreprocess:
 
         # print(b)
 
-        trainset = torchvision.datasets.CIFAR10(root='/data4T/ntanh/data/', train=False,
+        trainset = torchvision.datasets.CIFAR10(root='/data4T/ntanh/data/', train=True,
                                                 download=False, transform=transform,
                                                 # target_transform=one_hot
                                                 )
 
-        self.loader = torch.utils.data.DataLoader(trainset, batch_size=32,
-                                                  shuffle=False, num_workers=5)
+        self.train_loader = torch.utils.data.DataLoader(trainset, batch_size=32,
+                                                        shuffle=False, num_workers=5)
 
         print(trainset.class_to_idx)
+        print(trainset.targets)
         self.le = CustomLabelEncoder()
         self.le.mapper = trainset.class_to_idx
         # self.le.fit(self.labels)
@@ -47,22 +48,38 @@ class DataPreprocess:
         # trainset.targets = one_hot(trainset.targets)
         # print(config.TRAIN.BATCH_SIZE)
         self.classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-        with open(self.args.le_path, 'wb') as f:
-            pickle.dump(self.le, f)
+        # with open(self.args.le_path, 'wb') as f:
+        #     pickle.dump(self.le, f)
 
         testset = torchvision.datasets.CIFAR10(root='/data4T/ntanh/data/', train=False,
                                                download=False, transform=transform,
                                                # target_transform=one_hot
                                                )
+        a = self.le.inverse_transform(testset.targets)
+        print(type(a))
+        self.labels = np.concatenate((self.labels, self.le.inverse_transform(testset.targets)))
         testset.targets = onehot(testset.targets)
         self.val_loader = torch.utils.data.DataLoader(testset, batch_size=32,
                                                       shuffle=False, num_workers=5)
+
+        # a = self.le.inverse_transform(testset.targets.tolist())
+        print(len(self.labels))
+        # self.labels += self.le.inverse_transform(testset.targets)
+        # self.labels = np.concatenate((self.labels, self.le.inverse_transform(testset.targets)))
+        # print(type(self.labels))
+        # print(self.labels.shape)
 
     def infer(self, net, dev):
         self.output = []
         net.eval()
         net = net.to(dev)
-        for images, labels in self.loader:
+        for images, labels in self.train_loader:
+            images = images.to(dev)
+            with torch.no_grad():
+                out = net(images)
+                out = out.cpu().detach().numpy()
+                self.output.append(out)
+        for images, labels in self.val_loader:
             images = images.to(dev)
             with torch.no_grad():
                 out = net(images)
@@ -77,6 +94,7 @@ class DataPreprocess:
             # 'filename': self.files,
             'features': self.output,
             'labels': self.labels,
+            'le': self.le,
             'layer_name': 'fc1'
         }
 

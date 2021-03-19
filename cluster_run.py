@@ -20,7 +20,7 @@ def get_optimal(logging, k_values, y, direction="decreasing", curve="convex", me
     logging.info(f"{metric}: The optimal number of clusters: {optimal.knee} with an inertia of {optimal.knee_y}")
 
 
-def print_optimal(logging, dict_data, metric='',args=None):
+def print_optimal(logging, dict_data, metric='', args=None):
     dict_data = dict(sorted(dict_data.items(), key=lambda item: item[1]))
     optimal_cluster = [*dict_data][-1]
     logging.info(
@@ -29,6 +29,7 @@ def print_optimal(logging, dict_data, metric='',args=None):
     if args is not None:
         sav_figure_name = os.path.join(args.save_dir, sav_figure_name)
     sub_visual(dict_data, metric, save_name=sav_figure_name)
+    return optimal_cluster
 
 
 def sub_visual(dict_in, title='', save_name=''):
@@ -40,7 +41,7 @@ def sub_visual(dict_in, title='', save_name=''):
     fig, ax = plt.subplots(dpi=200, figsize=(5, 4))
     ax.plot(k_values, acc_k, '-bo')
     # ax[1].plot(K, [np.median(x) for x in silhouettes], ':o')
-    ax.set_xticks(range(int(min(k_values)), int(max(k_values))+1, 1))
+    ax.set_xticks(range(int(min(k_values)), int(max(k_values)) + 1, 1))
     ax.set_xlabel('number of clusters')
     ax.set_ylabel(title)
     if not save_name:
@@ -48,8 +49,114 @@ def sub_visual(dict_in, title='', save_name=''):
     plt.savefig(save_name)
 
 
+def clustering(args, logging, data):
+    fc1 = data['features']  # array containing fc1 features for each file
+    labels = data['labels']  # string labels for each image
+    le = data['le']
+    dict_fow_avg = {}
+    dict_adjusted_mutual_info = {}
+    dict_normalized_mutual_info = {}
+    dict_adjusted_rand = {}
+    dict_cluster_labels = {}
+    if not args.use_cache or not os.path.isfile(args.kmeans_k_cache_path):
+
+        y_gt = le.transform(labels)  # integer labels for each image
+        pca = PCA(n_components=args.pca_component, svd_solver='full', whiten=True)
+        pca_nw = PCA(n_components=args.pca_component, svd_solver='full', whiten=False)
+        x = pca.fit_transform(fc1)
+        x_nw = pca_nw.fit_transform(fc1)
+        if not args.pca_whitten:
+            x = x_nw
+
+        k_values = np.arange(3, 17)
+        acc_k = np.zeros(k_values.shape)
+        rs = np.random.RandomState(seed=987654321)
+        kmeans_total = {}
+        for i, (k, state) in enumerate(zip(k_values, rs.randint(2 ** 32, size=len(k_values)))):
+            kmeans = KMeans(n_clusters=k, init='k-means++', n_init=args.kmeans_n_init, random_state=state)
+
+            cluster_labels = kmeans.fit_predict(x)
+            dict_cluster_labels[k] = cluster_labels
+            kmeans_total[i] = kmeans
+            labels_unmatched_ = kmeans.labels_
+            y_pred_ = ct.label_matcher(labels_unmatched_, y_gt)
+            acc = (y_pred_ == y_gt).sum() / len(y_gt)
+            acc_k[i] = round(acc, 3)
+            fow_avg = fowlkes_mallows_score(y_gt, cluster_labels)
+            fow_avg = round(float(fow_avg), 3)
+            dict_fow_avg[k] = fow_avg
+
+            adjusted_mutual_info = adjusted_mutual_info_score(y_gt, cluster_labels)
+            adjusted_mutual_info = round(float(adjusted_mutual_info), 3)
+            dict_adjusted_mutual_info[k] = adjusted_mutual_info
+
+            normalized_mutual_info = normalized_mutual_info_score(y_gt, cluster_labels)
+            normalized_mutual_info = round(float(normalized_mutual_info), 3)
+            dict_normalized_mutual_info[k] = normalized_mutual_info
+
+            adjusted_rand = adjusted_rand_score(y_gt, cluster_labels)
+            adjusted_rand = round(float(adjusted_rand), 3)
+            dict_adjusted_rand[k] = adjusted_rand
+
+            sav_figure_name = "{}_{}_.jpg".format(k, acc_k[i])
+            sav_figure_name = os.path.join(args.save_img_1st_step_dir, sav_figure_name)
+            visual(y_pred_, kmeans, le, x, sav_figure_name, k)
+            print(
+                "cluster: {} accuracy: {} fow:{} AMI:{} NMI:{} AR:{}".format(
+                    k,
+                    acc_k[i],
+                    dict_fow_avg[k],
+                    dict_adjusted_mutual_info[k],
+                    dict_normalized_mutual_info[k],
+                    dict_adjusted_rand[k],
+                ))
+        optimal_cluster_list = []
+        optimal_cluster_list.append(print_optimal(logging, dict_fow_avg, metric='fowlkes_mallows_score', args=args))
+        optimal_cluster_list.append(
+            print_optimal(logging, dict_adjusted_mutual_info, metric='adjusted_mutual_info_score', args=args))
+        optimal_cluster_list.append(
+            print_optimal(logging, dict_normalized_mutual_info, metric='normalized_mutual_info_score', args=args))
+        optimal_cluster_list.append(print_optimal(logging, dict_adjusted_rand, metric='adjusted_rand_score', args=args))
+
+        with open(args.kmeans_k_cache_path, 'wb') as f:
+            pickle.dump({
+                'kmean': kmeans_total,
+                'k_values': k_values,
+                'acc_k': acc_k,
+                'cluster_labels': dict_cluster_labels,
+                'dict_adjusted_rand': dict_adjusted_rand,
+                'dict_adjusted_mutual_info': dict_adjusted_mutual_info,
+                'dict_normalized_mutual_info': dict_normalized_mutual_info,
+                'dict_fow_avg': dict_fow_avg,
+                'optimal_cluster_list': optimal_cluster_list
+            }, f)
+    else:
+        with open(args.kmeans_k_cache_path, 'rb') as f:
+            results_ = pickle.load(f)
+            k_values = results_['k_values']
+            acc_k = results_['acc_k']
+            dict_adjusted_rand = results_['dict_adjusted_rand']
+            dict_adjusted_mutual_info = results_['dict_adjusted_mutual_info']
+            dict_normalized_mutual_info = results_['dict_normalized_mutual_info']
+            dict_fow_avg = results_['dict_fow_avg']
+            optimal_cluster_list = results_['optimal_cluster_list']
+
+    for i, k in enumerate(k_values):
+        logging.info(
+            "cluster: {} accuracy: {} fow:{} AMI:{} NMI:{} AR:{}".format(
+                k, acc_k[i],
+                dict_fow_avg[k],
+                dict_adjusted_mutual_info[k],
+                dict_normalized_mutual_info[k],
+                dict_adjusted_rand[k],
+            ))
+
+    logging.info(f"optimal number of clusters {optimal_cluster_list}")
+    return optimal_cluster_list
+
+
 def main():
-    args, logging = init("experiments/cifar10/resnet50.yaml")
+    args, logging = init("experiments/neu-cls/resnet50.yaml")
 
     if os.path.exists(args.fc1_dir) and os.path.exists(args.le_path):
         print()
