@@ -156,7 +156,7 @@ def clustering(args, logging, data):
 
 
 def main():
-    args, logging = init("experiments/neu-cls/resnet50.yaml")
+    args, logging = init("experiments/neu-cls/flow1_resnet50.yaml")
 
     if os.path.exists(args.fc1_dir) and os.path.exists(args.le_path):
         print()

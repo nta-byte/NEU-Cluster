@@ -16,18 +16,19 @@ from libs.pretext import get_data_preprocess
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 
-def extract_feature(args, logging):
+def extract_feature(args, logging, class_merging=False):
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     DataPreprocess = get_data_preprocess(args)
-    dp = DataPreprocess(args)
+    dp = DataPreprocess(args, class_merging=class_merging)
 
     model = get_model(args)
+    dp.evaluate(model, device)
 
     dp.infer(model, device)
     dp.save_output()
 
 
 if __name__ == '__main__':
-    args, logging = init("experiments/cifar10/resnet50.yaml")
+    args, logging = init("experiments/cifar10/flow1_resnet50.yaml")
     extract_feature(args, logging)

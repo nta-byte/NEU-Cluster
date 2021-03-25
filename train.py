@@ -26,7 +26,7 @@ from libs.dataset import DataPreprocess
 
 
 def parse_args():
-    args, logging = init("experiments/cifar10/resnet50.yaml")
+    args, logging = init("experiments/cifar10/flow1_resnet50.yaml")
 
     update_config(config, args)
 

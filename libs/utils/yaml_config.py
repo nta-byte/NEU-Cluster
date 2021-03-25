@@ -73,5 +73,5 @@ def init(config_path):
         handlers=handlers,
         level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s')
-    # logging.info(args)
+    logging.info(args)
     return args, logging

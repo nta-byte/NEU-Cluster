@@ -51,7 +51,7 @@ def relabel(kmeans, labels_unmatched_, y_gt, le):
 
 
 def main():
-    args, logging = init("experiments/mlcc/resnet50.yaml")
+    args, logging = init("experiments/mlcc/flow1_resnet50.yaml")
 
     with open(args.fc1_path, 'rb') as f:
         data = pickle.load(f)

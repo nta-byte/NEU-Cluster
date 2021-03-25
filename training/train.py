@@ -27,7 +27,7 @@ def parse_args():
 
     parser.add_argument('--cfg',
                         help='experiment configure file name',
-                        default='experiments/mlcc/resnet50.yaml',
+                        default='experiments/mlcc/flow1_resnet50.yaml',
                         type=str)
 
     args = parser.parse_args()

@@ -20,16 +20,16 @@ from libs.relabeling import get_relabeling
 
 def main():
     """- step 1 : We'll train our system with original train set."""
-    args, logging = init("experiments/cifar10/resnet50.yaml")
+    args, logging = init("experiments/cifar10/flow1_resnet18.yaml")
     update_config(config, args)
 
     # train_function(args, config, step=1)
 
     """- step 2: after that, We extract feature from test set and cluster them by optimal number cluster algorithm."""
-    if os.path.exists(args.fc1_dir):
-        print()
-    else:
-        extract_feature(args, logging)
+    # if os.path.exists(args.fc1_dir):
+    #     print()
+    # else:
+    extract_feature(args, logging)
     with open(args.fc1_path, 'rb') as f:
         data = pickle.load(f)
     print('start clustering')
@@ -43,21 +43,22 @@ def main():
 
     """- step 3: train and valid test set with new labels retrieved from step 2 --> check accuracy."""
     opt_clst = list(set(opt_clst))
-    # for clusters in opt_clst:
-    clusters=10
-    print('clusters', clusters)
-    # with open(os.path.join(args.relabel_dir, str(clusters) + '_new_le.pkl'), 'rb') as f:
-    #     new_le = pickle.load(f)
+    print('best cluster:', opt_clst)
+    for clusters in opt_clst:
+        # clusters=10
+        print('clusters', clusters)
+        # with open(os.path.join(args.relabel_dir, str(clusters) + '_new_le.pkl'), 'rb') as f:
+        #     new_le = pickle.load(f)
 
-    config.DATASET.NUM_CLASSES = int(clusters)
-    config.DATASET.LE_PATH = os.path.join(args.relabel_dir, str(clusters) + '_new_le.pkl')
-    config.DATASET.TRAIN_LIST = os.path.join(args.relabel_dir, str(clusters) + '_train.pkl')
-    config.DATASET.VAL_LIST = os.path.join(args.relabel_dir, str(clusters) + '_test.pkl')
-    config.MODEL.PRETRAINED = False
-    config.TRAIN.FINETUNE = '/home/ntanh/ntanh/SDC_SALa_Clustering/CODE/NEU-Cluster/output_save/cifar10_RESNET50_pretrain_PCA50_kmeanNinit20_pytorch_histeq_whitten/relabel/output_training/train_10_cluster/resnet50-Epoch-40-Loss-0.97-Acc-0.82.pth'
-    config.TRAIN.BEGIN_EPOCH = 0
-    config.TRAIN.END_EPOCH = 100
-    train_function(args, config, step=3)
+        config.DATASET.NUM_CLASSES = int(clusters)
+        config.DATASET.LE_PATH = os.path.join(args.relabel_dir, str(clusters) + '_new_le.pkl')
+        config.DATASET.TRAIN_LIST = os.path.join(args.relabel_dir, str(clusters) + '_train.pkl')
+        config.DATASET.VAL_LIST = os.path.join(args.relabel_dir, str(clusters) + '_test.pkl')
+        config.MODEL.PRETRAINED = False
+        config.TRAIN.FINETUNE = args.pretrained_path
+        config.TRAIN.BEGIN_EPOCH = 0
+        config.TRAIN.END_EPOCH = 100
+        train_function(args, config, step=3)
 
 
 if __name__ == '__main__':

@@ -10,6 +10,7 @@ import torch.nn.functional as F
 def train_step(loader, net, crit, optim, dev, total_step, logging, config, debug_steps=100, epo=-1, scheduler=None):
     net.train()
     # print((loader))
+    train_loss = 0
     for i, (images, labels) in enumerate(loader):
         images = images.to(dev)
         labels = labels.to(dev)
@@ -23,6 +24,10 @@ def train_step(loader, net, crit, optim, dev, total_step, logging, config, debug
         # Backward and optimize
         loss.backward()
         optim.step()
+
+        train_loss += loss.item()
+        _, predicted = outputs.max(1)
+
         if scheduler:
             scheduler.step()
 
@@ -86,10 +91,10 @@ def evaluation(loader, net, crit, dev, logging, thres=0.3, classNum=7, le=None):
 
     pbar.close()
     net.train()
-    metirc['fps'] = round(total_frame / total_time, 3)
+    # metirc['fps'] = round(total_frame / total_time, 3)
     metirc['loss'] = round(running_loss / len(loader), 3)
 
-    logging.info('val acc: {}, val loss {}, fps {}'.format(metirc['acc'], metirc['loss'], metirc['fps']))
+    logging.info('val acc: {}, val loss {}'.format(metirc['acc'], metirc['loss']))
     return metirc
 
 

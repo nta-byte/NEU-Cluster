@@ -1,7 +1,10 @@
 import numpy as np
 import os
+import time
+from tqdm import tqdm
 from pathlib import Path
 import pickle
+import random
 from PIL import Image
 from torchvision import models, transforms
 import torch.nn as nn
@@ -18,56 +21,89 @@ from libs.pretext.utils import get_data_list, load_images
 
 
 class DataPreprocess:
-    def __init__(self, argus):
+    def __init__(self, argus, class_merging=False):
         self.args = argus
         print(f"dataset: {self.args.dataset}")
-        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-        transform = transforms.Compose([
+        normalize = transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+        self.transform = transforms.Compose([
             transforms.Resize((self.args.image_size, self.args.image_size)),
             transforms.ToTensor(),
             normalize
         ])
-        # target_transform =
-
-        # print(b)
-
         trainset = torchvision.datasets.CIFAR10(root='/data4T/ntanh/data/', train=True,
-                                                download=False, transform=transform,
-                                                # target_transform=one_hot
+                                                download=False, transform=self.transform,
                                                 )
 
-        self.train_loader = torch.utils.data.DataLoader(trainset, batch_size=32,
-                                                        shuffle=False, num_workers=5)
-
+        testset = torchvision.datasets.CIFAR10(root='/data4T/ntanh/data/', train=False,
+                                               download=False, transform=self.transform,
+                                               )
+        if class_merging:
+            trainset, testset = self.random_class_merging(trainset, testset)
         print(trainset.class_to_idx)
-        print(trainset.targets)
+        # print(trainset.classes)
         self.le = CustomLabelEncoder()
         self.le.mapper = trainset.class_to_idx
         # self.le.fit(self.labels)
-        self.labels = self.le.inverse_transform(trainset.targets)
-        # trainset.targets = one_hot(trainset.targets)
-        # print(config.TRAIN.BATCH_SIZE)
-        self.classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-        # with open(self.args.le_path, 'wb') as f:
-        #     pickle.dump(self.le, f)
-
-        testset = torchvision.datasets.CIFAR10(root='/data4T/ntanh/data/', train=False,
-                                               download=False, transform=transform,
-                                               # target_transform=one_hot
-                                               )
-        a = self.le.inverse_transform(testset.targets)
-        print(type(a))
-        self.labels = np.concatenate((self.labels, self.le.inverse_transform(testset.targets)))
+        self.trainlabels = self.le.inverse_transform(trainset.targets)
+        self.testlabel = self.le.inverse_transform(testset.targets)
+        self.labels = np.concatenate((self.trainlabels, self.testlabel))
+        # self.labels = self.testlabel
+        trainset.targets = onehot(trainset.targets)
         testset.targets = onehot(testset.targets)
-        self.val_loader = torch.utils.data.DataLoader(testset, batch_size=32,
-                                                      shuffle=False, num_workers=5)
 
-        # a = self.le.inverse_transform(testset.targets.tolist())
-        print(len(self.labels))
-        # self.labels += self.le.inverse_transform(testset.targets)
-        # self.labels = np.concatenate((self.labels, self.le.inverse_transform(testset.targets)))
-        # print(type(self.labels))
-        # print(self.labels.shape)
+        self.train_loader = torch.utils.data.DataLoader(trainset, batch_size=self.args.batch_size,
+                                                        shuffle=False, num_workers=self.args.workers)
+        self.val_loader = torch.utils.data.DataLoader(testset, batch_size=self.args.batch_size,
+                                                      shuffle=False, num_workers=self.args.workers)
+        self.classes = trainset.classes
+
+    def random_class_merging(self, trainset=None, testset=None):
+        # print(trainset.class_to_idx)
+        # print(trainset.targets)
+        class_to_idx = trainset.class_to_idx
+        le = CustomLabelEncoder()
+        le.mapper = trainset.class_to_idx
+        trainlabels = le.inverse_transform(trainset.targets)
+        testlabels = le.inverse_transform(testset.targets)
+        # print(trainlabels)
+        classes = list(class_to_idx.keys())
+        random.shuffle(classes)
+        mergepoint = int(len(classes) / 2)
+        # print(mergepoint)
+        new_classes1 = classes[:mergepoint]
+        new_classes2 = classes[mergepoint:]
+        new_classes = [x1 + "_" + x2 for (x1, x2) in zip(new_classes1, new_classes2)]
+        new_classes_list = [[x1, x2] for (x1, x2) in zip(new_classes1, new_classes2)]
+        # print('new_classes_list', new_classes_list)
+        # print(new_classes2)
+        # print('new_classes', new_classes)
+
+        new_trainlabels = [''] * len(trainlabels)
+        for iddd, x in enumerate(trainlabels):
+            for idxxxx, new_x in enumerate(new_classes_list):
+                if x in new_x:
+                    new_trainlabels[iddd] = new_classes[idxxxx]
+
+        new_testlabels = [''] * len(testlabels)
+        for iddd, x in enumerate(testlabels):
+            for idxxxx, new_x in enumerate(new_classes_list):
+                if x in new_x:
+                    new_testlabels[iddd] = new_classes[idxxxx]
+        # print('set(trainlabels)', set(trainlabels))
+        # print('set(new_trainlabels)', set(new_trainlabels))
+        new_class_to_idx = {}
+        for i, x in enumerate(new_classes):
+            new_class_to_idx[x] = i
+        # print(new_class_to_idx)
+        new_le = CustomLabelEncoder()
+        new_le.mapper = new_class_to_idx
+        trainset.targets = new_le.transform(new_trainlabels)
+        trainset.class_to_idx = new_class_to_idx
+        trainset.classes = new_classes
+        testset.targets = new_le.transform(new_testlabels)
+        testset.class_to_idx = new_class_to_idx
+        testset.classes = new_classes
+        return trainset, testset
 
     def infer(self, net, dev):
         self.output = []
@@ -88,6 +124,37 @@ class DataPreprocess:
         self.output = np.concatenate(self.output, axis=0)
         if len(self.output.shape) > 2:
             self.output = self.output.reshape((self.output.shape[0], self.output.shape[1]))
+
+    def evaluate(self, net, dev):
+        net.eval()
+        net = net.to(dev)
+        with torch.no_grad():
+            correct = 0
+            total = 0
+            pbar = tqdm(total=len(self.val_loader), desc='eval model:')
+            for idx, batch in enumerate(self.val_loader):
+                if idx >= len(self.val_loader):
+                    break
+                images = batch[0].to(dev)
+                targets = batch[1].to(dev)
+                # start = time.time()
+                predicted = net(images)
+
+                predicted = predicted.argmax(1)
+
+                targets = targets.argmax(1)
+
+                total += targets.size(0)
+                # print(total)
+                correct += predicted.eq(targets).sum().item()
+                # total_time += time.time() - start
+                pbar.update(1)
+                # total_frame += len(images)
+
+        pbar.close()
+        acc = 100. * correct / total
+        print('total', total, 'correct', correct)
+        print('accuracy:', round(acc, 3))
 
     def save_output(self):
         results = {

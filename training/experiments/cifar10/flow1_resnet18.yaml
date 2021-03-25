@@ -13,7 +13,7 @@ DATASET:
   NUM_CLASSES: 10
   LE_PATH: ''
 MODEL:
-  NAME: resnet50
+  NAME: resnet18
   PRETRAINED: true
   HEAD: ''
   BACKBONE: ''
@@ -22,23 +22,23 @@ MODEL:
 TRAIN:
   FINETUNE: ''
   IMAGE_SIZE:
-    - 112
-    - 112
-  BATCH_SIZE: 128
+    - 32
+    - 32
+  BATCH_SIZE: 256
   SHUFFLE: true
   BEGIN_EPOCH: 0
-  END_EPOCH: 1000
+  END_EPOCH: 200
   RESUME: true
-  OPTIMIZER: adam # adam or sgd
-  LR: 0.001
+  OPTIMIZER: sgd # adam or sgd
+  LR: 0.01
   DROPOUT: 0.2
   PRINT_FREQ: 100
   RANDOM_CROP: true
   RESIZE: false
-  VALIDATION_EPOCH: 10
+  VALIDATION_EPOCH: 1
 
 TEST:
   IMAGE_SIZE:
-    - 224
-    - 224
-  BATCH_SIZE: 128
+    - 32
+    - 32
+  BATCH_SIZE: 256

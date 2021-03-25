@@ -18,6 +18,9 @@ def get_model(config):
     elif config.MODEL.NAME == 'resnet50':
         model = models.resnet.resnet50(pretrained=pretrained)
         model.fc = nn.Linear(2048, n_class)
+    elif config.MODEL.NAME == 'resnet18':
+        model = models.resnet.resnet18(pretrained=pretrained)
+        model.fc = nn.Linear(512, n_class)
     elif config.MODEL.NAME == 'vgg16':
         model = models.vgg16(pretrained=pretrained)
         model.classifier[6] = nn.Linear(4096, n_class)

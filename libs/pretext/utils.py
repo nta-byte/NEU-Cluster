@@ -81,6 +81,12 @@ def get_model(args):
     if args.model == 'RESNET50':
         model = models.resnet.resnet50(pretrained=True)
         model = nn.Sequential(*list(model.children())[:-1])
+    elif args.model == 'RESNET18':
+        # model = models.resnet.resnet18(pretrained=True)
+
+        model = models.resnet.resnet18(pretrained=True)
+        # model.fc = nn.Linear(512, 10)
+        model = nn.Sequential(*list(model.children())[:-1])
     elif args.model == 'VGG16':
         vgg16_path = '/home/ntanh/.cache/torch/checkpoints/vgg16-397923af.pth'
         model = models.vgg16(pretrained=True)
