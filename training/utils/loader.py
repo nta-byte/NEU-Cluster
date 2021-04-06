@@ -147,53 +147,49 @@ class Dataset(torch.utils.data.Dataset):
         return len(self.dataList[0])
 
 
-class data_loader_idcard(Dataset):
-    def __init__(self, path_fileconfig, path_image=None, channel=3, transform=None, train=True):
-        self.path_fileconfig = path_fileconfig
+class NEU_Dataset(torch.utils.data.Dataset):
+    def __init__(self, imgList=None, dataList=None, transform=None, augment=None, le=None, label_file=None,
+                 label_list=None):
         self.transform = transform
-        self.list_path_image = []
-        self.list_label_str = []
-        self.channel = channel
-        path_dir = os.path.dirname(path_fileconfig)
-        with open(path_fileconfig, 'r') as readf:
-            for line in readf:
-                strs = line.split(',')
-                if len(strs) == 2:
-                    strs[1] = strs[1].replace('\n', '')
-                    self.list_path_image.append(strs[0])
-                    self.list_label_str.append(strs[1])
-        self.dict_label = ['0', '90', '180', '270']
-        # self.dict_label.sort()
-        self.list_label_str = np.array(self.list_label_str)
-        self.list_int = []
-        for i, lable in enumerate(self.list_label_str):
-            id = 0
-            for j, d in enumerate(self.dict_label):
-                if lable == d:
-                    id = j
-                    break
-            self.list_int.append(id)
-        self.list_label = np.array(self.list_int)
-        # self.list_label = self.convert_to_one_hot(self.list_label, len(self.dict_label))
+        self.augment = augment
+        self.imgList = imgList
+        self.dataList = dataList
+
+        print(self.dataList)
+        if le is None:
+            self.le = CustomLabelEncoder()
+            self.le.fit(self.dataList)
+        else:
+            self.le = le
+        self.dataList_transformed = self.le.transform(self.dataList)
+        # print(list(self.le.classes_))
+        # print(self.dataList_transformed)
+        # b = np.zeros((self.dataList_transformed.size, self.dataList_transformed.max() + 1))
+        # b[np.arange(self.dataList_transformed.size), self.dataList_transformed] = 1
+        print(self.dataList_transformed)
+        # self.dataList_transformed = b
 
     def __getitem__(self, index):
-        imgpath = self.list_path_image[index]
-        if self.channel == 1:
-            img = Image.open(imgpath).convert('L')
-        else:
-            img = Image.open(imgpath).convert('RGB')
+        imgpath = self.imgList[index]
+        target = self.dataList_transformed[index]
+
+        img = Image.open(imgpath).convert('RGB')
+        if self.augment is not None:
+            img = self.augment(np.array(img))
+            # img = Image.fromarray(img)
         if self.transform is not None:
             img = self.transform(img)
-        label = self.list_label[index]
-        return img, torch.tensor(label)
+        # print(img.shape)
+
+        target = np.array(target).astype(np.long)
+
+        return img, target
 
     def __len__(self):
-        return len(self.list_path_image)
+        return len(self.imgList)
 
-    def convert_to_one_hot(self, list_label, number_class):
-        b = np.zeros((list_label.size, number_class))
-        b[np.arange(list_label.size), list_label] = 1
-        return b
+    def get_classNum(self):
+        return len(self.dataList[0])
 
 
 def get_img_paths(dir_, extensions=('.jpg', '.png', '.jpeg', '.PNG', '.JPG', '.JPEG')):

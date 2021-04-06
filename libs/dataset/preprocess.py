@@ -72,7 +72,7 @@ def get_list_files(dir_path, extensions=['bmp', 'jpg', 'png']):
     for ext in extensions:
         list_files.extend(root.glob('**/*.{}'.format(ext)))
     files = sorted(list_files, key=lambda file: file.name)
-    print(files)
+    # print(files)
     return files
 
 

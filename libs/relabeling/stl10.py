@@ -85,8 +85,8 @@ class Relabel:
                     pickle.dump(new_le, f)
 
             elif self.args.cluster_dataset == 'train_test':
-                out_train = y_pred_2_label[:50000]
-                out_test = y_pred_2_label[50000:]
+                out_train = y_pred_2_label[:5000]
+                out_test = y_pred_2_label[8000:]
                 with open(os.path.join(self.args.relabel_dir, str(k) + '_train.pkl'), 'wb') as f:
                     pickle.dump(out_train, f)
                 with open(os.path.join(self.args.relabel_dir, str(k) + '_test.pkl'), 'wb') as f:

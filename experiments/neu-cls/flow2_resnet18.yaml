@@ -1,11 +1,11 @@
 # general
-dataset: "cifar10" # neu-cls or neu-cls-64
-save_dir: "output_save_flow1"
+dataset: "neu-cls" # neu-cls or neu-cls-64
+save_dir: "output_save_flow2"
 save_img_1st_step_dir: "1st_step"
 save_first_train: "1st_train"
 
 # general
-data_preprocess_path: ""
+data_preprocess_path: "/data20.04/home/ntanh/SDC_SALa_Clustering/CODE/NEU-Cluster/data/neu-cls"
 le_path: "label_encoder.pickle" # label encoder model which converts string labels to integers.
 fc1_dir: "raw_features"
 relabel_dir: "relabel"
@@ -27,14 +27,14 @@ k_max: 17
 # train options
 batch_size: 256
 image_size: 224
-cfg: "training/experiments/cifar10/flow1_resnet18.yaml"
+cfg: "training/experiments/neu-cls/flow2_resnet18.yaml"
 # general
 seed: 42
-workers: 15
+workers: 8
 
 # model options
 framework: "pytorch" # pytorch or tf
 model: "RESNET18" # "VGG16" "RESNET50"
 model_path: ""
-pretrained_path: "/home/ntanh/ntanh/SDC_SALa_Clustering/CODE/NEU-Cluster/output_save_flow1/cifar10_RESNET18_pretrain_PCA30_kmeanNinit50_pytorch_histeq_whitten/relabel/output_training/train_10_cluster/resnet18-Epoch-16-Loss-0.475-Acc-0.85.pth"
+pretrained_path: "output_save_flow2/neu-cls_RESNET18_pretrain_PCA50_kmeanNinit50_pytorch_histeq_whitten/1st_train/train_3_cluster/resnet18-Epoch-4-Loss-0.018-Acc-0.99.pth"
 reload: False

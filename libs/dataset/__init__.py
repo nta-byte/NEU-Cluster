@@ -4,10 +4,15 @@ import torch.utils.data as data
 import torchvision.transforms as transforms
 import torch.nn.functional as F
 # from training.utils.loader import DataLoader
-from training.utils.loader import Dataset, onehot
+from training.utils.loader import Dataset, onehot, NEU_Dataset
 from libs.helper import classification_tools as ct
+from libs.pretext.utils import get_data_list, load_images
+# from libs.pretext.utils import Dataset as NEU_Dataset
+from libs.helper.classification_tools import CustomLabelEncoder
 import torch
 import torchvision
+from torch._utils import _accumulate
+from torch import randperm
 import numpy as np
 from PIL import Image
 
@@ -58,8 +63,6 @@ class DataPreprocess:
 
                 transforms.RandomCrop(config.TRAIN.IMAGE_SIZE[0], padding=4),
                 transforms.RandomHorizontalFlip(),
-                # transforms.Resize((config.TRAIN.IMAGE_SIZE[0], config.TRAIN.IMAGE_SIZE[1]),
-                #                   interpolation=Image.NEAREST),
                 transforms.ToTensor(),
                 normalize
             ])
@@ -69,42 +72,178 @@ class DataPreprocess:
                                   interpolation=Image.NEAREST),
                 transforms.ToTensor(),  # 3*H*W, [0, 1]
                 normalize])
-            # transform = transforms.Compose([
-            #     transforms.Resize((config.TRAIN.IMAGE_SIZE[0], config.TRAIN.IMAGE_SIZE[1])),
-            #     transforms.ToTensor(),
-            #     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-            # ])
-
-            trainset = torchvision.datasets.CIFAR10(root='/data4T/ntanh/data/', train=True,
-                                                    download=False, transform=transform_train,
-                                                    # target_transform=one_hot
-                                                    )
-            testset = torchvision.datasets.CIFAR10(root='/data4T/ntanh/data/', train=False,
-                                                   download=False, transform=transform_val,
-                                                   # target_transform=one_hot
-                                                   )
             self.classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-            print('old class name: ', self.classes)
-            print('old mapper:', trainset.class_to_idx)
-            if step == 3:
-                with open(config.DATASET.LE_PATH, 'rb') as f:
-                    new_le = pickle.load(f)
-                with open(config.DATASET.TRAIN_LIST, 'rb') as f:
-                    train_list = pickle.load(f)
-                with open(config.DATASET.VAL_LIST, 'rb') as f:
-                    test_list = pickle.load(f)
-                print(type(train_list), train_list)
-                trainset.targets = new_le.transform(train_list.tolist())
-                testset.targets = new_le.transform(test_list)
-                print(new_le.mapper)
-                print(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])))
-                print(list(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])).keys()))
-                self.classes = list(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])).keys())
-                print('new class name: ', self.classes)
-                print('new mapper:', new_le.mapper)
+            print('cluster_dataset:', args.cluster_dataset)
+            if args.cluster_dataset == 'train_test':
+                trainset = torchvision.datasets.CIFAR10(root='/data4T/ntanh/data/', train=True,
+                                                        download=False, transform=transform_train,
+                                                        )
+                testset = torchvision.datasets.CIFAR10(root='/data4T/ntanh/data/', train=False,
+                                                       download=False, transform=transform_val,
+                                                       )
+                if step == 3:
+                    with open(config.DATASET.LE_PATH, 'rb') as f:
+                        new_le = pickle.load(f)
+                    with open(config.DATASET.TRAIN_LIST, 'rb') as f:
+                        train_label = pickle.load(f)
+                    with open(config.DATASET.VAL_LIST, 'rb') as f:
+                        test_label = pickle.load(f)
+                    print(type(train_label), train_label)
+                    trainset.targets = new_le.transform(train_label.tolist())
+                    testset.targets = new_le.transform(test_label)
+                    print(new_le.mapper)
+                    print(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])))
+                    print(list(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])).keys()))
+                    self.classes = list(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])).keys())
+                    print('new class name: ', self.classes)
+                    print('new mapper:', new_le.mapper)
+            elif args.cluster_dataset == 'train':
+                dtset = torchvision.datasets.CIFAR10(root='/data4T/ntanh/data/', train=True,
+                                                     download=False, transform=transform_train,
+                                                     )
+                if step == 3:
+                    with open(config.DATASET.LE_PATH, 'rb') as f:
+                        new_le = pickle.load(f)
+                    with open(config.DATASET.TRAIN_LIST, 'rb') as f:
+                        train_label = pickle.load(f)
+                    print(type(train_label), train_label)
+                    dtset.targets = new_le.transform(train_label.tolist())
+                    print(new_le.mapper)
+                    print(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])))
+                    print(list(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])).keys()))
+                    self.classes = list(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])).keys())
+                    print('new class name: ', self.classes)
+                    print('new mapper:', new_le.mapper)
+                trainset, testset = torch.utils.data.random_split(dtset, [40000, 10000])
+            elif args.cluster_dataset == 'test':
+                dtset = torchvision.datasets.CIFAR10(root='/data4T/ntanh/data/', train=False,
+                                                     download=False, transform=transform_train,
+                                                     )
+                if step == 3:
+                    with open(config.DATASET.LE_PATH, 'rb') as f:
+                        new_le = pickle.load(f)
+                    # with open(config.DATASET.TRAIN_LIST, 'rb') as f:
+                    #     train_label = pickle.load(f)
+                    with open(config.DATASET.VAL_LIST, 'rb') as f:
+                        test_label = pickle.load(f)
+                    # print(type(train_label), train_label)
+                    dtset.targets = new_le.transform(test_label.tolist())
+                    # testset.targets = new_le.transform(test_label)
+                    print(new_le.mapper)
+                    print(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])))
+                    print(list(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])).keys()))
+                    self.classes = list(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])).keys())
+                    print('new class name: ', self.classes)
+                    print('new mapper:', new_le.mapper)
+                trainset, testset = torch.utils.data.random_split(dtset, [8000, 2000])
+                # dataset_valid, dataset_test = torch.utils.data.random_split(dtset, [5000, 5000])
+                trainset, testset = trainset.dataset, testset.dataset
+                print('old mapper:', trainset.class_to_idx)
 
-            testset.targets = onehot(testset.targets)
-            trainset.targets = onehot(trainset.targets)
+            print('old class name: ', self.classes)
+            # print('old mapper:', trainset.class_to_idx)
+
+            # testset.targets = onehot(testset.targets)
+            # trainset.targets = onehot(trainset.targets)
+            print(config.TRAIN.BATCH_SIZE)
+            self.train_loader = torch.utils.data.DataLoader(trainset, batch_size=config.TRAIN.BATCH_SIZE,
+                                                            shuffle=True, num_workers=config.WORKERS)
+
+            self.val_loader = torch.utils.data.DataLoader(testset, batch_size=config.TEST.BATCH_SIZE,
+                                                          shuffle=False, num_workers=config.WORKERS)
+        elif args.dataset == 'stl10':
+            normalize = transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+            transform_train = transforms.Compose([
+
+                transforms.RandomCrop(config.TRAIN.IMAGE_SIZE[0], padding=4),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                normalize
+            ])
+
+            transform_val = transforms.Compose([
+                transforms.Resize((config.TRAIN.IMAGE_SIZE[0], config.TRAIN.IMAGE_SIZE[1]),
+                                  interpolation=Image.NEAREST),
+                transforms.ToTensor(),  # 3*H*W, [0, 1]
+                normalize])
+            self.classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+            print('cluster_dataset:', args.cluster_dataset)
+            if args.cluster_dataset == 'train_test':
+                trainset = torchvision.datasets.STL10(root='/data4T/ntanh/data/stl10_binary', split='train',
+                                                      download=False, transform=transform_train,
+                                                      # target_transform=onehot,
+                                                      )
+                testset = torchvision.datasets.STL10(root='/data4T/ntanh/data/stl10_binary', split='test',
+                                                     download=False, transform=transform_train,
+                                                     # target_transform=onehot,
+                                                     )
+                if step == 3:
+                    with open(config.DATASET.LE_PATH, 'rb') as f:
+                        new_le = pickle.load(f)
+                    with open(config.DATASET.TRAIN_LIST, 'rb') as f:
+                        train_label = pickle.load(f)
+                    with open(config.DATASET.VAL_LIST, 'rb') as f:
+                        test_label = pickle.load(f)
+                    print(type(train_label), train_label)
+                    trainset.targets = new_le.transform(train_label.tolist())
+                    testset.targets = new_le.transform(test_label)
+                    print(new_le.mapper)
+                    print(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])))
+                    print(list(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])).keys()))
+                    self.classes = list(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])).keys())
+                    print('new class name: ', self.classes)
+                    print('new mapper:', new_le.mapper)
+            elif args.cluster_dataset == 'train':
+                dtset = torchvision.datasets.STL10(root='/data4T/ntanh/data/stl10_binary', split='train',
+                                                   download=False, transform=transform_train,
+                                                   )
+                if step == 3:
+                    with open(config.DATASET.LE_PATH, 'rb') as f:
+                        new_le = pickle.load(f)
+                    with open(config.DATASET.TRAIN_LIST, 'rb') as f:
+                        train_label = pickle.load(f)
+                    print(type(train_label), train_label)
+                    dtset.targets = new_le.transform(train_label.tolist())
+                    print(new_le.mapper)
+                    print(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])))
+                    print(list(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])).keys()))
+                    self.classes = list(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])).keys())
+                    print('new class name: ', self.classes)
+                    print('new mapper:', new_le.mapper)
+                trainset, testset = torch.utils.data.random_split(dtset, [40000, 10000])
+            elif args.cluster_dataset == 'test':
+                dtset = torchvision.datasets.STL10(root='/data4T/ntanh/data/stl10_binary', split='test',
+                                                   download=False, transform=transform_train,
+                                                   )
+                if step == 3:
+                    with open(config.DATASET.LE_PATH, 'rb') as f:
+                        new_le = pickle.load(f)
+                    # with open(config.DATASET.TRAIN_LIST, 'rb') as f:
+                    #     train_label = pickle.load(f)
+                    with open(config.DATASET.VAL_LIST, 'rb') as f:
+                        test_label = pickle.load(f)
+                    # print(type(train_label), train_label)
+                    dtset.targets = new_le.transform(test_label.tolist())
+                    # testset.targets = new_le.transform(test_label)
+                    print(new_le.mapper)
+                    print(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])))
+                    print(list(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])).keys()))
+                    self.classes = list(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])).keys())
+                    print('new class name: ', self.classes)
+                    print('new mapper:', new_le.mapper)
+                trainset, testset = torch.utils.data.random_split(dtset, [2000, 6000])
+                # dataset_valid, dataset_test = torch.utils.data.random_split(dtset, [5000, 5000])
+                trainset, testset = trainset.dataset, testset.dataset
+                # print('old mapper:', trainset.class_to_idx)
+
+            print('old class name: ', self.classes)
+            # print('old mapper:', trainset.class_to_idx)
+            # print(testset.labels)
+            # testset.labels = onehot(testset.labels)
+            # print(testset.labels)
+            # trainset.labels = onehot(trainset.labels)
+            # print('trainset.labels', trainset.labels)
+            # print('onehot(trainset.labels)', onehot(trainset.labels))
             print(config.TRAIN.BATCH_SIZE)
             self.train_loader = torch.utils.data.DataLoader(trainset, batch_size=config.TRAIN.BATCH_SIZE,
                                                             shuffle=True, num_workers=config.WORKERS)
@@ -114,53 +253,32 @@ class DataPreprocess:
         elif args.dataset == 'neu-cls':
             normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
             transform_train = transforms.Compose([
-                transforms.Resize((config.TRAIN.IMAGE_SIZE[0], config.TRAIN.IMAGE_SIZE[1]),
-                                  interpolation=Image.NEAREST),
+                transforms.Resize((config.TRAIN.IMAGE_SIZE[0], config.TRAIN.IMAGE_SIZE[1])),
                 transforms.ToTensor(),
                 normalize
             ])
-
             transform_val = transforms.Compose([
-                transforms.Resize((config.TRAIN.IMAGE_SIZE[0], config.TRAIN.IMAGE_SIZE[1]),
-                                  interpolation=Image.NEAREST),
+                transforms.Resize((config.TRAIN.IMAGE_SIZE[0], config.TRAIN.IMAGE_SIZE[1])),
                 transforms.ToTensor(),  # 3*H*W, [0, 1]
                 normalize])
-            if isinstance(config.DATASET.TRAIN_LIST, str):
-                train_dataset = Dataset(
-                    label_file=config.DATASET.TRAIN_LIST,
-                    transform=transform_train, augment=None)
-                le = train_dataset.le
-                print(le.mapper)
-                self.classes = list(le.mapper.values())
+            self.files, self.labels = get_data_list(args)
 
-                val_dataset = Dataset(
-                    label_file=config.DATASET.VAL_LIST,
-                    transform=transform_val, augment=None, le=le)
-            elif isinstance(config.DATASET.TRAIN_LIST, list):
-                train_dataset = Dataset(
-                    label_list=config.DATASET.TRAIN_LIST,
-                    transform=transform_train, augment=None)
-                le = train_dataset.le
-                print(le.mapper)
-                self.classes = list(le.mapper.values())
-
-                val_dataset = Dataset(
-                    label_list=config.DATASET.VAL_LIST,
-                    transform=transform_val, augment=None, le=le)
-
+            self.le = CustomLabelEncoder()
+            self.le.fit(self.labels)
+            self.classes = list(dict(sorted(self.le.mapper.items(), key=lambda item: item[1])).keys())
+            dataset = NEU_Dataset(imgList=self.files, dataList=self.labels, le=self.le, transform=transform_train)
+            # print(len(dataset))
+            train_len = int(len(dataset) * .8)
+            trainset, testset = torch.utils.data.random_split(dataset, [train_len, len(dataset) - train_len])
             # Data loader
-            self.train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
-                                                            batch_size=config.TRAIN.BATCH_SIZE,
-                                                            num_workers=config.WORKERS,
-                                                            shuffle=True)
+            self.train_loader = torch.utils.data.DataLoader(trainset, batch_size=config.TRAIN.BATCH_SIZE,
+                                                            shuffle=True, num_workers=config.WORKERS)
 
-            self.val_loader = torch.utils.data.DataLoader(dataset=val_dataset,
-                                                          batch_size=config.TEST.BATCH_SIZE,
-                                                          num_workers=config.WORKERS,
-                                                          shuffle=False)
-        # dataiter = iter(self.val_loader)
-        # images, labels = dataiter.next()
-        # print(labels)
+            self.val_loader = torch.utils.data.DataLoader(testset, batch_size=config.TEST.BATCH_SIZE,
+                                                          shuffle=False, num_workers=config.WORKERS)
+            # dataiter = iter(self.val_loader)
+            # images, labels = dataiter.next()
+            # # print(labels)
 
 
 if __name__ == '__main__':

@@ -49,6 +49,7 @@ def init(config_path):
     args.fc1_dir = os.path.join(args.save_dir, args.fc1_dir)
     args.fc1_path = os.path.join(args.fc1_dir, fc1_file_name)
     args.save_img_1st_step_dir = os.path.join(args.save_dir, args.save_img_1st_step_dir)
+    args.save_first_train = os.path.join(args.save_dir, args.save_first_train)
     args.le_path = os.path.join(args.fc1_dir, args.le_path)
 
     args.kmeans_k_cache_path = os.path.join(args.save_dir, args.kmeans_k_cache_path)
@@ -65,6 +66,8 @@ def init(config_path):
         os.makedirs(args.fc1_dir)
     if not os.path.exists(args.save_img_1st_step_dir):
         os.makedirs(args.save_img_1st_step_dir)
+    if not os.path.exists(args.save_first_train):
+        os.makedirs(args.save_first_train)
 
     # Init logging
     logname = os.path.join(args.save_dir, 'log_train.txt')

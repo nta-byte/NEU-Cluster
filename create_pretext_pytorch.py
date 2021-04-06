@@ -13,7 +13,7 @@ from libs.dataset.preprocess import get_list_files
 from libs.pretext.utils import get_model
 from libs.pretext import get_data_preprocess
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 
 def extract_feature(args, logging, class_merging=False):
@@ -23,12 +23,13 @@ def extract_feature(args, logging, class_merging=False):
     dp = DataPreprocess(args, class_merging=class_merging)
 
     model = get_model(args)
-    dp.evaluate(model, device)
+    # dp.evaluate(model, device)
 
     dp.infer(model, device)
     dp.save_output()
+    del dp
 
 
 if __name__ == '__main__':
-    args, logging = init("experiments/cifar10/flow1_resnet50.yaml")
+    args, logging = init("experiments/neu-cls/flow1_resnet18.yaml")
     extract_feature(args, logging)

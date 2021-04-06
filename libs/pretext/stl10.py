@@ -30,30 +30,35 @@ class DataPreprocess:
             transforms.ToTensor(),
             normalize
         ])
-        trainset = torchvision.datasets.CIFAR10(root='/data4T/ntanh/data/', train=True,
-                                                download=False, transform=self.transform,
-                                                )
-
-        testset = torchvision.datasets.CIFAR10(root='/data4T/ntanh/data/', train=False,
-                                               download=False, transform=self.transform,
-                                               )
+        trainset = torchvision.datasets.STL10(root='/data4T/ntanh/data/stl10_binary', split='train',
+                                              download=False, transform=self.transform,
+                                              # target_transform=onehot,
+                                              )
+        testset = torchvision.datasets.STL10(root='/data4T/ntanh/data/stl10_binary', split='test',
+                                             download=False, transform=self.transform,
+                                             # target_transform=onehot,
+                                             )
+        trainset.class_to_idx = {_class: i for i, _class in enumerate(trainset.classes)}
+        testset.class_to_idx = {_class: i for i, _class in enumerate(testset.classes)}
         if class_merging:
             trainset, testset = self.random_class_merging(trainset, testset)
-        print(trainset.class_to_idx)
+        print(trainset.classes)
         # print(trainset.classes)
         self.le = CustomLabelEncoder()
+
         self.le.mapper = trainset.class_to_idx
         # self.le.fit(self.labels)
-        self.trainlabels = self.le.inverse_transform(trainset.targets)
-        self.testlabel = self.le.inverse_transform(testset.targets)
+        print(trainset.class_to_idx)
+        self.trainlabels = self.le.inverse_transform(trainset.labels)
+        self.testlabel = self.le.inverse_transform(testset.labels)
         if self.args.cluster_dataset == 'train':
             self.labels = self.trainlabels
         elif self.args.cluster_dataset == 'test':
             self.labels = self.testlabel
         else:
             self.labels = np.concatenate((self.trainlabels, self.testlabel))
-        trainset.targets = onehot(trainset.targets)
-        testset.targets = onehot(testset.targets)
+        # trainset.targets = onehot(trainset.targets)
+        # testset.targets = onehot(testset.targets)
 
         self.train_loader = torch.utils.data.DataLoader(trainset, batch_size=self.args.batch_size,
                                                         shuffle=False, num_workers=self.args.workers)
@@ -67,8 +72,8 @@ class DataPreprocess:
         class_to_idx = trainset.class_to_idx
         le = CustomLabelEncoder()
         le.mapper = trainset.class_to_idx
-        trainlabels = le.inverse_transform(trainset.targets)
-        testlabels = le.inverse_transform(testset.targets)
+        trainlabels = le.inverse_transform(trainset.labels)
+        testlabels = le.inverse_transform(testset.labels)
         # print(trainlabels)
         classes = list(class_to_idx.keys())
         random.shuffle(classes)
@@ -101,10 +106,10 @@ class DataPreprocess:
         # print(new_class_to_idx)
         new_le = CustomLabelEncoder()
         new_le.mapper = new_class_to_idx
-        trainset.targets = new_le.transform(new_trainlabels)
+        trainset.labels = new_le.transform(new_trainlabels)
         trainset.class_to_idx = new_class_to_idx
         trainset.classes = new_classes
-        testset.targets = new_le.transform(new_testlabels)
+        testset.labels = new_le.transform(new_testlabels)
         testset.class_to_idx = new_class_to_idx
         testset.classes = new_classes
         return trainset, testset

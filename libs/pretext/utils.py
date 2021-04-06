@@ -119,11 +119,11 @@ def get_data_list(args):
         files = _get_list_files(os.path.join(args.data_preprocess_path, 'images_preprocessed'),
                                 args.use_histeq)
         # files = _get_list_files(args.data_preprocess_path, args.use_histeq)
-    print(len(files))
+    # print(len(files))
     # ## Shuffle the filenames so they appear randomly in the dataset.
     rs = np.random.RandomState(seed=749976)
     rs.shuffle(files)
 
     labels = extract_labels(files)
-    print('labels', labels)
+    # print('labels', labels)
     return files, labels

@@ -20,7 +20,7 @@ from libs.relabeling import get_relabeling
 
 def main():
     """- step 1 : We'll train our system with original train set."""
-    args, logging = init("experiments/cifar10/flow1_resnet18.yaml")
+    args, logging = init("experiments/neu-cls/flow1_resnet18.yaml")
     update_config(config, args)
 
     # train_function(args, config, step=1)

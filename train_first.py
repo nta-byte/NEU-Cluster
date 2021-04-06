@@ -39,7 +39,7 @@ def train_function(args, configuration, step=1):
     clusters = config.DATASET.NUM_CLASSES
 
     # Init save dir
-    save_dir_root = args.training_ouput_dir
+    save_dir_root = args.save_first_train
     save_dir = os.path.join(save_dir_root,
                             f'train_{clusters}_cluster')
     if not os.path.exists(save_dir):
@@ -91,7 +91,7 @@ def train_function(args, configuration, step=1):
                                     le=data_preprocess.classes)
             val_loss = val_result['loss']
             val_acc = val_result['acc']
-            if val_acc >= max_acc or val_loss <= min_loss:
+            if val_acc > max_acc or val_loss < min_loss:
                 if val_acc > max_acc:
                     max_acc = val_acc
                     max_acc_epoch = epoch
@@ -109,10 +109,10 @@ def train_function(args, configuration, step=1):
 
 def train_function2(args, configuration):
     # preprocess
-    clusters = 5
+    clusters = 3
 
     # Init save dir
-    save_dir_root = args.training_ouput_dir
+    save_dir_root = args.save_first_train
     save_dir = os.path.join(save_dir_root,
                             f'train_{clusters}_cluster')
     if not os.path.exists(save_dir):
@@ -135,16 +135,17 @@ def train_function2(args, configuration):
     DataPreprocess = get_data_preprocess(args)
     dp = DataPreprocess(args, class_merging=True)
     train_loader, val_loader = dp.train_loader, dp.val_loader
-    print(dp.classes)
+    # print(dp.classes)
 
     # model prepare
     model = get_model(configuration)
     model = model.to(device)
-    print(model)
+    # print(model)
 
     # criteria prepare
     # Loss and optimizer
-    optimizer = get_optimizer(configuration, model)
+    optimizer, scheduler = get_optimizer(configuration, model)
+    print(optimizer)
     criterion = nn.CrossEntropyLoss()
 
     # train process
@@ -156,17 +157,17 @@ def train_function2(args, configuration):
     min_loss_epoch = 0
     for epoch in range(config.TRAIN.BEGIN_EPOCH, config.TRAIN.END_EPOCH):
         logging.info('Epoch [{}/{}]'.format(epoch, config.TRAIN.END_EPOCH))
-        train_step(train_loader, model, criterion, optimizer, device, total_step, logging=logging, config=config,
+        train_step(loader=train_loader, net=model, crit=criterion, optim=optimizer, dev=device, total_step=total_step, logging=logging, config=config,
                    epo=epoch,
                    debug_steps=config.TRAIN.PRINT_FREQ,
-                   # scheduler=scheduler
+                   scheduler=scheduler
                    )
         if epoch % config.TRAIN.VALIDATION_EPOCH == 0 or epoch == config.TRAIN.END_EPOCH - 1:
             val_result = evaluation(val_loader, model, criterion, device, classNum=classNum, logging=logging,
                                     le=dp.classes)
             val_loss = val_result['loss']
             val_acc = val_result['acc']
-            if val_acc >= max_acc or val_loss <= min_loss:
+            if val_acc > max_acc or val_loss < min_loss:
                 if val_acc > max_acc:
                     max_acc = val_acc
                     max_acc_epoch = epoch

@@ -5,6 +5,7 @@ from statistics import mean
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.nn.functional import softmax
 
 
 def train_step(loader, net, crit, optim, dev, total_step, logging, config, debug_steps=100, epo=-1, scheduler=None):
@@ -12,21 +13,31 @@ def train_step(loader, net, crit, optim, dev, total_step, logging, config, debug
     # print((loader))
     train_loss = 0
     for i, (images, labels) in enumerate(loader):
+        # print('labels', labels)
         images = images.to(dev)
         labels = labels.to(dev)
-        optim.zero_grad()
+        # print(labels)
+        # print(optim)
+
 
         # Forward pass
         outputs = net(images)
-        labels = labels.argmax(1)
+        # print('outputs', outputs)
+        # print('labels', labels)
+        # outputs = outputs.argmax(1)
+        # values, prob = softmax(outputs, dim=-1).max(-1)
+        # print('predicted', outputs)
+        # print('prob', prob)
+        # print('labels.argmax(1)', labels.argmax(1))
         loss = crit(outputs, labels)
 
         # Backward and optimize
+        optim.zero_grad()
         loss.backward()
         optim.step()
 
         train_loss += loss.item()
-        _, predicted = outputs.max(1)
+        # _, predicted = outputs.max(1)
 
         if scheduler:
             scheduler.step()
@@ -79,7 +90,7 @@ def evaluation(loader, net, crit, dev, logging, thres=0.3, classNum=7, le=None):
             targets = batch[1].to(dev)
             start = time.time()
             preds = net(images)
-            targets = targets.argmax(1)
+            # targets = targets.argmax(1)
             loss = crit(preds, targets)
             running_loss += loss.item()
             post_result = post_pr(preds.clone().cpu().numpy(), batch[1].numpy())
@@ -148,7 +159,7 @@ class ClsPostProcess(object):
                       for i, idx in enumerate(pred_idxs)]
         if label is None:
             return decode_out
-        label = label.argmax(1)
+        # label = label.argmax(1)
         label = [(self.label_list[idx], 1.0) for idx in label]
         # print(decode_out, label)
         return decode_out, label

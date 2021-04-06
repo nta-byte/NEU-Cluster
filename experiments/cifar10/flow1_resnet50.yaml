@@ -2,7 +2,7 @@
 dataset: "cifar10" # neu-cls or neu-cls-64
 save_dir: "output_save"
 save_img_1st_step_dir: "1st_step"
-
+save_first_train: "1st_train"
 
 kmeans_k_cache_path: "kmeans_acc_vs_k.pickle"
 use_cache: True

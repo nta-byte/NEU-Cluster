@@ -2,10 +2,7 @@
 dataset: "cifar10" # neu-cls or neu-cls-64
 save_dir: "output_save_flow2"
 save_img_1st_step_dir: "1st_step"
-
-
-kmeans_k_cache_path: "kmeans_acc_vs_k.pickle"
-use_cache: True
+save_first_train: "1st_train"
 
 # general
 data_preprocess_path: "data/mlcc/"
@@ -14,14 +11,18 @@ fc1_dir: "raw_features"
 relabel_dir: "relabel"
 training_ouput_dir: "output_training"
 
+# cluster dataset
+cluster_dataset: "test" # train, test and train_test
+
 # cluster
+kmeans_k_cache_path: "kmeans_acc_vs_k.pickle"
+use_cache: True
 use_histeq: True
 kmeans_n_init: 50
 pca_component: 50
 pca_whitten: True
 k_min: 3
 k_max: 17
-
 
 # train options
 batch_size: 256
@@ -31,11 +32,9 @@ cfg: "training/experiments/cifar10/flow2_resnet18.yaml"
 seed: 42
 workers: 8
 
-
 # model options
 framework: "pytorch" # pytorch or tf
 model: "RESNET18" # "VGG16" "RESNET50"
-feature_dim: 128
-model_path: "save/STL-10"
+model_path: ""
 pretrained_path: "output_save_flow2/cifar10_RESNET18_transfer_PCA30_kmeanNinit50_pytorch_histeq_whitten/relabel/output_training/train_5_cluster/resnet18-Epoch-180-Loss-2.306-Acc-0.85.pth"
 reload: False
