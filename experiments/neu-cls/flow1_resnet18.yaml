@@ -16,7 +16,7 @@ cluster_dataset: "test" # train, test and train_test
 
 # cluster
 kmeans_k_cache_path: "kmeans_acc_vs_k.pickle"
-use_cache: True
+use_cache: False
 use_histeq: True
 kmeans_n_init: 50
 pca_component: 50
@@ -36,5 +36,5 @@ workers: 15
 framework: "pytorch" # pytorch or tf
 model: "RESNET18" # "VGG16" "RESNET50"
 model_path: ""
-pretrained_path: "/data20.04/home/ntanh/SDC_SALa_Clustering/CODE/NEU-Cluster/output_save_flow1/neu-cls_RESNET18_pretrain_PCA50_kmeanNinit50_pytorch_histeq_whitten/1st_train/train_10_cluster/resnet18-Epoch-12-Loss-0.001-Acc-1.0.pth"
+pretrained_path: "/data20.04/home/ntanh/SDC_SALa_Clustering/CODE/NEU-Cluster/output_save_flow1/neu-cls_RESNET18_pretrain_PCA50_kmeanNinit50_pytorch_histeq_whitten/1st_train/train_6_cluster/resnet18-Epoch-8-Loss-0.001-Acc-1.0.pth"
 reload: False

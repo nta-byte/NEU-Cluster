@@ -155,7 +155,7 @@ class NEU_Dataset(torch.utils.data.Dataset):
         self.imgList = imgList
         self.dataList = dataList
 
-        print(self.dataList)
+        # print(self.dataList)
         if le is None:
             self.le = CustomLabelEncoder()
             self.le.fit(self.dataList)
@@ -166,7 +166,7 @@ class NEU_Dataset(torch.utils.data.Dataset):
         # print(self.dataList_transformed)
         # b = np.zeros((self.dataList_transformed.size, self.dataList_transformed.max() + 1))
         # b[np.arange(self.dataList_transformed.size), self.dataList_transformed] = 1
-        print(self.dataList_transformed)
+        # print(self.dataList_transformed)
         # self.dataList_transformed = b
 
     def __getitem__(self, index):

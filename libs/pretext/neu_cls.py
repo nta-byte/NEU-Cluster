@@ -32,6 +32,7 @@ class DataPreprocess:
         self.le = CustomLabelEncoder()
         self.le.fit(self.labels)
         print(self.le.mapper)
+        self.class_to_idx = self.le.mapper
 
         labels_int = self.le.transform(self.labels[:10])
         labels_str = self.le.inverse_transform(labels_int)
@@ -65,27 +66,22 @@ class DataPreprocess:
         self.loader = torch.utils.data.DataLoader(dataset, batch_size=self.args.batch_size,
                                                   shuffle=False, num_workers=self.args.workers)
 
-        dataiter = iter(self.val_loader)
-        images, labels = dataiter.next()
-        print(labels)
+        # dataiter = iter(self.val_loader)
+        # images, labels = dataiter.next()
+        # print(labels)
 
     def random_class_merging(self, trainset=None):
         class_to_idx = self.le.mapper
         # le = self.le
         # le.mapper = trainset.class_to_idx
         trainlabels = self.labels
-        # print(trainlabels)
         classes = list(class_to_idx.keys())
         random.shuffle(classes)
         mergepoint = int(len(classes) / 2)
-        # print(mergepoint)
         new_classes1 = classes[:mergepoint]
         new_classes2 = classes[mergepoint:]
         new_classes = [x1 + "_" + x2 for (x1, x2) in zip(new_classes1, new_classes2)]
         new_classes_list = [[x1, x2] for (x1, x2) in zip(new_classes1, new_classes2)]
-        # print('new_classes_list', new_classes_list)
-        # print(new_classes2)
-        # print('new_classes', new_classes)
 
         new_trainlabels = [''] * len(trainlabels)
         for iddd, x in enumerate(trainlabels):
