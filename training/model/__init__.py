@@ -37,6 +37,7 @@ def get_model(config):
         model_dict = model.state_dict()
 
         pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict and v.size() == model_dict[k].size()}
+        print(len(pretrained_dict.keys()), len(model_dict.keys()))
         model_dict.update(pretrained_dict)
         model.load_state_dict(model_dict)
     return model

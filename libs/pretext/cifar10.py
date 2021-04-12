@@ -30,16 +30,16 @@ class DataPreprocess:
             transforms.ToTensor(),
             normalize
         ])
-        trainset = torchvision.datasets.CIFAR10(root='/data4T/ntanh/data/', train=True,
-                                                download=False, transform=self.transform,
+        trainset = torchvision.datasets.CIFAR10(root=self.args.dataset_root, train=True,
+                                                download=True, transform=self.transform,
                                                 )
 
-        testset = torchvision.datasets.CIFAR10(root='/data4T/ntanh/data/', train=False,
-                                               download=False, transform=self.transform,
+        testset = torchvision.datasets.CIFAR10(root=self.args.dataset_root, train=False,
+                                               download=True, transform=self.transform,
                                                )
         if class_merging:
             trainset, testset = self.random_class_merging(trainset, testset)
-        print(trainset.class_to_idx)
+        print('class_to_idx', trainset.class_to_idx)
         # print(trainset.classes)
         self.le = CustomLabelEncoder()
         self.le.mapper = trainset.class_to_idx
@@ -52,8 +52,8 @@ class DataPreprocess:
             self.labels = self.testlabel
         else:
             self.labels = np.concatenate((self.trainlabels, self.testlabel))
-        trainset.targets = onehot(trainset.targets)
-        testset.targets = onehot(testset.targets)
+        # trainset.targets = onehot(trainset.targets)
+        # testset.targets = onehot(testset.targets)
 
         self.train_loader = torch.utils.data.DataLoader(trainset, batch_size=self.args.batch_size,
                                                         shuffle=False, num_workers=self.args.workers)

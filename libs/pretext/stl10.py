@@ -30,12 +30,12 @@ class DataPreprocess:
             transforms.ToTensor(),
             normalize
         ])
-        trainset = torchvision.datasets.STL10(root='/data4T/ntanh/data/stl10_binary', split='train',
-                                              download=False, transform=self.transform,
+        trainset = torchvision.datasets.STL10(root=self.args.dataset_root, split='train',
+                                              download=True, transform=self.transform,
                                               # target_transform=onehot,
                                               )
-        testset = torchvision.datasets.STL10(root='/data4T/ntanh/data/stl10_binary', split='test',
-                                             download=False, transform=self.transform,
+        testset = torchvision.datasets.STL10(root=self.args.dataset_root, split='test',
+                                             download=True, transform=self.transform,
                                              # target_transform=onehot,
                                              )
         trainset.class_to_idx = {_class: i for i, _class in enumerate(trainset.classes)}

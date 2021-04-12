@@ -24,6 +24,7 @@ from training.config import update_config, config
 from libs.utils.yaml_config import init
 from libs.dataset import DataPreprocess
 from libs.pretext import get_data_preprocess
+from training.utils.early_stoppping import EarlyStopping
 
 
 def parse_args():
@@ -72,6 +73,10 @@ def train_function(args, configuration, step=1):
 
     criterion = nn.CrossEntropyLoss()
 
+    # initialize the early_stopping object
+    save_best_model = os.path.join(save_dir, f"{config.MODEL.NAME}-best.pth")
+    early_stopping = EarlyStopping(patience=25, verbose=True, path=save_best_model)
+
     # train process
     total_step = len(train_loader)
     classNum = config.DATASET.NUM_CLASSES
@@ -104,15 +109,21 @@ def train_function(args, configuration, step=1):
                 logging.info(f"Saved model {model_path}")
             logging.info(f"best val Acc: {max_acc} in epoch: {max_acc_epoch}")
             logging.info(f"Min val Loss: {min_loss} in epoch: {min_loss_epoch}")
+            early_stopping(val_loss, model)
+
+            if early_stopping.early_stop:
+                print("Early stopping")
+                break
         logging.info('--------------------------------------------')
+    return save_best_model
 
 
 def train_function2(args, configuration):
     # preprocess
-    clusters = 3
+    clusters = int(configuration.DATASET.NUM_CLASSES / 2)
 
     # Init save dir
-    save_dir_root = args.save_first_train
+    save_dir_root = args.training_ouput_dir
     save_dir = os.path.join(save_dir_root,
                             f'train_{clusters}_cluster')
     if not os.path.exists(save_dir):
@@ -145,8 +156,12 @@ def train_function2(args, configuration):
     # criteria prepare
     # Loss and optimizer
     optimizer, scheduler = get_optimizer(configuration, model)
-    print(optimizer)
+    # print(optimizer)
     criterion = nn.CrossEntropyLoss()
+
+    # initialize the early_stopping object
+    save_best_model = os.path.join(save_dir, f"{config.MODEL.NAME}-best.pth")
+    early_stopping = EarlyStopping(patience=7, verbose=True, path=save_best_model)
 
     # train process
     total_step = len(train_loader)
@@ -155,9 +170,11 @@ def train_function2(args, configuration):
     max_acc_epoch = 0
     min_loss = 1e7
     min_loss_epoch = 0
+    smallest_loss_weight_path = ''
     for epoch in range(config.TRAIN.BEGIN_EPOCH, config.TRAIN.END_EPOCH):
         logging.info('Epoch [{}/{}]'.format(epoch, config.TRAIN.END_EPOCH))
-        train_step(loader=train_loader, net=model, crit=criterion, optim=optimizer, dev=device, total_step=total_step, logging=logging, config=config,
+        train_step(loader=train_loader, net=model, crit=criterion, optim=optimizer, dev=device, total_step=total_step,
+                   logging=logging, config=config,
                    epo=epoch,
                    debug_steps=config.TRAIN.PRINT_FREQ,
                    scheduler=scheduler
@@ -168,19 +185,28 @@ def train_function2(args, configuration):
             val_loss = val_result['loss']
             val_acc = val_result['acc']
             if val_acc > max_acc or val_loss < min_loss:
+                model_path = os.path.join(save_dir,
+                                          f"{config.MODEL.NAME}-Epoch-{epoch}-Loss-{val_loss}-Acc-{val_acc}.pth")
                 if val_acc > max_acc:
                     max_acc = val_acc
                     max_acc_epoch = epoch
                 if val_loss < min_loss:
                     min_loss = val_loss
                     min_loss_epoch = epoch
-                model_path = os.path.join(save_dir,
-                                          f"{config.MODEL.NAME}-Epoch-{epoch}-Loss-{val_loss}-Acc-{val_acc}.pth")
+                    smallest_loss_weight_path = model_path
+
                 torch.save(model.state_dict(), model_path)
                 logging.info(f"Saved model {model_path}")
             logging.info(f"best val Acc: {max_acc} in epoch: {max_acc_epoch}")
             logging.info(f"Min val Loss: {min_loss} in epoch: {min_loss_epoch}")
+
+            early_stopping(val_loss, model)
+
+            if early_stopping.early_stop:
+                print("Early stopping")
+                break
         logging.info('--------------------------------------------')
+    return smallest_loss_weight_path
 
 
 def train():

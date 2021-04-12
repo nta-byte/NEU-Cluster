@@ -1,28 +1,76 @@
-import numpy as np
-import torch.nn.functional as F
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 
 
-def onehot_transform(dataList_transformed):
-    dataList_transformed = np.reshape(dataList_transformed, (-1, 1))
-    target_transform = np.zeros((dataList_transformed.size, dataList_transformed.max() + 1))
-    target_transform[np.arange(dataList_transformed.size), dataList_transformed] = 1
-    return target_transform
+class ModelA(torch.nn.Module):
+    def __init__(self):
+        super(ModelA, self).__init__()
+        self.A = torch.nn.Linear(2, 3)
+        self.B = torch.nn.Linear(3, 4)
+        self.C = torch.nn.Linear(4, 4)
+        self.D = torch.nn.Linear(4, 3)
 
-def one_hot(array):
-    unique, inverse = np.unique(array, return_inverse=True)
-    onehot = np.eye(unique.shape[0])[inverse]
-    return onehot
+    def forward(self, x):
+        x = F.relu(self.A(x))
+        x = F.relu(self.B(x))
+        x = F.relu(self.C(x))
+        x = F.relu(self.D(x))
+        return x
 
-a = np.array([1, 2, 3, 4, 5, 6])
-# a = np.reshape(a, 6)
-print(a)
-# a = np.reshape(a, 6, order='F')
-# print(a)
 
-# a = np.reshape(a, (-1, 1))
-print(a)
-print(one_hot(a))
-x_data = torch.tensor(a)
-a = F.one_hot(x_data)
-print(a)
+class ModelB(torch.nn.Module):
+    def __init__(self):
+        super(ModelB, self).__init__()
+        self.A = torch.nn.Linear(2, 3)
+        self.B = torch.nn.Linear(3, 4)
+        self.C = torch.nn.Linear(4, 4)
+        self.E = torch.nn.Linear(4, 2)
+
+    def forward(self, x):
+        x = F.relu(self.A(x))
+        x = F.relu(self.B(x))
+        x = F.relu(self.C(x))
+        x = F.relu(self.E(x))
+        return x
+
+
+modelA = ModelB()
+modelA_dict = modelA.state_dict()
+
+print('-' * 40)
+for key in sorted(modelA_dict.keys()):
+    parameter = modelA_dict[key]
+    print(key)
+    # print(parameter.size())
+    # print(parameter)
+
+
+modelB = ModelB()
+# modelB = nn.Sequential(*list(modelB.children()))
+modelB.E = nn.Sequential()
+modelB_dict = modelB.state_dict()
+
+print('-' * 40)
+for key in sorted(modelB_dict.keys()):
+    parameter = modelB_dict[key]
+    print(key)
+    # print(parameter.size())
+    # print(parameter)
+#
+# print('-' * 40)
+# print("modelB is going to use the ABC layers parameters from modelA")
+# pretrained_dict = modelA_dict
+# model_dict = modelB_dict
+# # 1. filter out unnecessary keys
+# pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
+# # 2. overwrite entries in the existing state dict
+# model_dict.update(pretrained_dict)
+# # 3. load the new state dict
+# modelB.load_state_dict(model_dict)
+# modelB_dict = modelB.state_dict()
+# for key in sorted(modelB_dict.keys()):
+#     parameter = modelB_dict[key]
+#     print(key)
+#     print(parameter.size())
+#     print(parameter)

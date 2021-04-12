@@ -13,8 +13,6 @@ from libs.dataset.preprocess import get_list_files
 from libs.pretext.utils import get_model
 from libs.pretext import get_data_preprocess
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-
 
 def extract_feature(args, logging, class_merging=False):
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -22,7 +20,7 @@ def extract_feature(args, logging, class_merging=False):
     DataPreprocess = get_data_preprocess(args)
     dp = DataPreprocess(args, class_merging=class_merging)
 
-    model = get_model(args)
+    model = get_model(args, activation=False)
     # dp.evaluate(model, device)
 
     dp.infer(model, device)

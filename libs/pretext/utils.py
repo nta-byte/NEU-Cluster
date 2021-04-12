@@ -62,36 +62,36 @@ def extract_labels(f):
 
 
 def load_state(weight_path, net):
-    # state_dict = torch.load(args.pretrained_path,
-    #                         map_location=lambda storage, loc: storage)
-    # # model.load_state_dict(torch.load(config.MODEL.PRETRAINED,
-    # #                                  map_location=lambda storage, loc: storage))
-    # model.load_state_dict(state_dict, strict=True)
-
-    pretrained_dict = torch.load(weight_path,
-                                 map_location=lambda storage, loc: storage)
+    pretrained_dict = torch.load(weight_path)
     model_dict = net.state_dict()
     pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
+    print(len(pretrained_dict.keys()), len(model_dict.keys()))
     model_dict.update(pretrained_dict)
     net.load_state_dict(model_dict)
+    # for key in sorted(model_dict.keys()):
+    #     parameter = model_dict[key]
+    #     print(key)
     return net
 
 
-def get_model(args):
+def get_model(args, activation=False):
     if args.model == 'RESNET50':
         model = models.resnet.resnet50(pretrained=True)
-        model = nn.Sequential(*list(model.children())[:-1])
+        if not activation:
+            # model = nn.Sequential(*list(model.children())[:-1])
+            model.fc = nn.Sequential()
     elif args.model == 'RESNET18':
-        # model = models.resnet.resnet18(pretrained=True)
+        model = models.resnet.resnet18(pretrained=False)
 
-        model = models.resnet.resnet18(pretrained=True)
-        # model.fc = nn.Linear(512, 10)
-        model = nn.Sequential(*list(model.children())[:-1])
+        if not activation:
+            # model = nn.Sequential(*list(model.children())[:-1])
+            model.fc = nn.Sequential()
+        else:
+            model.fc = nn.Linear(512, 10)
     elif args.model == 'VGG16':
-        vgg16_path = '/home/ntanh/.cache/torch/checkpoints/vgg16-397923af.pth'
         model = models.vgg16(pretrained=True)
-        model.classifier = nn.Sequential(*(list(model.classifier.children())[:1]))
-        # model = load_state(vgg16_path, model)
+        if not activation:
+            model.classifier = nn.Sequential(*(list(model.classifier.children())[:1]))
     if args.pretrained_path:
         print("load weight:", args.pretrained_path)
         model = load_state(args.pretrained_path, model)

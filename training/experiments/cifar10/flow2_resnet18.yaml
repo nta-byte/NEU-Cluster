@@ -27,10 +27,10 @@ TRAIN:
   BATCH_SIZE: 128
   SHUFFLE: true
   BEGIN_EPOCH: 0
-  END_EPOCH: 1000
+  END_EPOCH: 100
   RESUME: true
-  OPTIMIZER: adam # adam or sgd
-  LR: 0.001
+  OPTIMIZER: sgd # adam or sgd
+  LR: 0.01
   DROPOUT: 0.2
   PRINT_FREQ: 100
   RANDOM_CROP: true

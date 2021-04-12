@@ -60,7 +60,7 @@ class DataPreprocess:
         elif args.dataset == 'cifar10':
             normalize = transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
             transform_train = transforms.Compose([
-
+                # transforms.Resize((config.TRAIN.IMAGE_SIZE[0], config.TRAIN.IMAGE_SIZE[1])),
                 transforms.RandomCrop(config.TRAIN.IMAGE_SIZE[0], padding=4),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
@@ -68,18 +68,17 @@ class DataPreprocess:
             ])
 
             transform_val = transforms.Compose([
-                transforms.Resize((config.TRAIN.IMAGE_SIZE[0], config.TRAIN.IMAGE_SIZE[1]),
-                                  interpolation=Image.NEAREST),
+                transforms.Resize((config.TRAIN.IMAGE_SIZE[0], config.TRAIN.IMAGE_SIZE[1])),
                 transforms.ToTensor(),  # 3*H*W, [0, 1]
                 normalize])
             self.classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
             print('cluster_dataset:', args.cluster_dataset)
             if args.cluster_dataset == 'train_test':
-                trainset = torchvision.datasets.CIFAR10(root='/data4T/ntanh/data/', train=True,
-                                                        download=False, transform=transform_train,
+                trainset = torchvision.datasets.CIFAR10(root=args.dataset_root, train=True,
+                                                        download=True, transform=transform_train,
                                                         )
-                testset = torchvision.datasets.CIFAR10(root='/data4T/ntanh/data/', train=False,
-                                                       download=False, transform=transform_val,
+                testset = torchvision.datasets.CIFAR10(root=args.dataset_root, train=False,
+                                                       download=True, transform=transform_val,
                                                        )
                 if step == 3:
                     with open(config.DATASET.LE_PATH, 'rb') as f:
@@ -98,8 +97,8 @@ class DataPreprocess:
                     print('new class name: ', self.classes)
                     print('new mapper:', new_le.mapper)
             elif args.cluster_dataset == 'train':
-                dtset = torchvision.datasets.CIFAR10(root='/data4T/ntanh/data/', train=True,
-                                                     download=False, transform=transform_train,
+                dtset = torchvision.datasets.CIFAR10(root=args.dataset_root, train=True,
+                                                     download=True, transform=transform_train,
                                                      )
                 if step == 3:
                     with open(config.DATASET.LE_PATH, 'rb') as f:
@@ -116,19 +115,15 @@ class DataPreprocess:
                     print('new mapper:', new_le.mapper)
                 trainset, testset = torch.utils.data.random_split(dtset, [40000, 10000])
             elif args.cluster_dataset == 'test':
-                dtset = torchvision.datasets.CIFAR10(root='/data4T/ntanh/data/', train=False,
-                                                     download=False, transform=transform_train,
+                dtset = torchvision.datasets.CIFAR10(root=args.dataset_root, train=False,
+                                                     download=True, transform=transform_train,
                                                      )
                 if step == 3:
                     with open(config.DATASET.LE_PATH, 'rb') as f:
                         new_le = pickle.load(f)
-                    # with open(config.DATASET.TRAIN_LIST, 'rb') as f:
-                    #     train_label = pickle.load(f)
                     with open(config.DATASET.VAL_LIST, 'rb') as f:
                         test_label = pickle.load(f)
-                    # print(type(train_label), train_label)
                     dtset.targets = new_le.transform(test_label.tolist())
-                    # testset.targets = new_le.transform(test_label)
                     print(new_le.mapper)
                     print(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])))
                     print(list(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])).keys()))
@@ -154,7 +149,6 @@ class DataPreprocess:
         elif args.dataset == 'stl10':
             normalize = transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
             transform_train = transforms.Compose([
-
                 transforms.RandomCrop(config.TRAIN.IMAGE_SIZE[0], padding=4),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
@@ -162,19 +156,18 @@ class DataPreprocess:
             ])
 
             transform_val = transforms.Compose([
-                transforms.Resize((config.TRAIN.IMAGE_SIZE[0], config.TRAIN.IMAGE_SIZE[1]),
-                                  interpolation=Image.NEAREST),
+                transforms.Resize((config.TRAIN.IMAGE_SIZE[0], config.TRAIN.IMAGE_SIZE[1])),
                 transforms.ToTensor(),  # 3*H*W, [0, 1]
                 normalize])
             self.classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
             print('cluster_dataset:', args.cluster_dataset)
             if args.cluster_dataset == 'train_test':
-                trainset = torchvision.datasets.STL10(root='/data4T/ntanh/data/stl10_binary', split='train',
-                                                      download=False, transform=transform_train,
+                trainset = torchvision.datasets.STL10(root=args.dataset_root, split='train',
+                                                      download=True, transform=transform_train,
                                                       # target_transform=onehot,
                                                       )
-                testset = torchvision.datasets.STL10(root='/data4T/ntanh/data/stl10_binary', split='test',
-                                                     download=False, transform=transform_train,
+                testset = torchvision.datasets.STL10(root=args.dataset_root, split='test',
+                                                     download=True, transform=transform_train,
                                                      # target_transform=onehot,
                                                      )
                 if step == 3:
@@ -194,8 +187,8 @@ class DataPreprocess:
                     print('new class name: ', self.classes)
                     print('new mapper:', new_le.mapper)
             elif args.cluster_dataset == 'train':
-                dtset = torchvision.datasets.STL10(root='/data4T/ntanh/data/stl10_binary', split='train',
-                                                   download=False, transform=transform_train,
+                dtset = torchvision.datasets.STL10(root=args.dataset_root, split='train',
+                                                   download=True, transform=transform_train,
                                                    )
                 if step == 3:
                     with open(config.DATASET.LE_PATH, 'rb') as f:
@@ -210,10 +203,12 @@ class DataPreprocess:
                     self.classes = list(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])).keys())
                     print('new class name: ', self.classes)
                     print('new mapper:', new_le.mapper)
-                trainset, testset = torch.utils.data.random_split(dtset, [40000, 10000])
+
+                train_len = int(len(dtset) * .8)
+                trainset, testset = torch.utils.data.random_split(dtset, [train_len, len(dtset) - train_len])
             elif args.cluster_dataset == 'test':
-                dtset = torchvision.datasets.STL10(root='/data4T/ntanh/data/stl10_binary', split='test',
-                                                   download=False, transform=transform_train,
+                dtset = torchvision.datasets.STL10(root=args.dataset_root, split='test',
+                                                   download=True, transform=transform_train,
                                                    )
                 if step == 3:
                     with open(config.DATASET.LE_PATH, 'rb') as f:
@@ -231,7 +226,9 @@ class DataPreprocess:
                     self.classes = list(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])).keys())
                     print('new class name: ', self.classes)
                     print('new mapper:', new_le.mapper)
-                trainset, testset = torch.utils.data.random_split(dtset, [2000, 6000])
+                train_len = int(len(dtset) * .5)
+                trainset, testset = torch.utils.data.random_split(dtset, [train_len, len(dtset) - train_len])
+                # trainset, testset = torch.utils.data.random_split(dtset, [2000, 6000])
                 # dataset_valid, dataset_test = torch.utils.data.random_split(dtset, [5000, 5000])
                 trainset, testset = trainset.dataset, testset.dataset
                 # print('old mapper:', trainset.class_to_idx)

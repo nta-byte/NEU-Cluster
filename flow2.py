@@ -27,7 +27,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 
 def main():
-    args, logging = init("experiments/neu-cls/flow2_resnet18.yaml")
+    args, logging = init("experiments/cifar10/flow2_resnet18.yaml")
     update_config(config, args)
     """- step 1: make new labels for the datatset by merging 2 classes into 1 randomly -> we got k classes."""
     # merge  randomly class
@@ -35,7 +35,8 @@ def main():
 
     """- step 2: train classifier with k classes."""
     # train
-    # train_function2(args, config)
+    args.cluster_dataset = 'train'
+    smallest_loss_weight_path = train_function2(args, config)
 
     """- step 3: extract feature and cluster the datatset by optimal number cluster algorithm."""
     # extract
@@ -43,6 +44,7 @@ def main():
     # if os.path.exists(args.fc1_dir):
     #     print()
     # else:
+    args.cluster_dataset = 'test'
     extract_feature(args, logging, class_merging=True)
     with open(args.fc1_path, 'rb') as f:
         data = pickle.load(f)
@@ -60,7 +62,7 @@ def main():
     """- step 4: train and valid with new labels retrieved from step 3 --> check accuracy."""
     # train on trainset and validate on test set
     for clusters in opt_clst:
-    # clusters = 10
+        # clusters = 10
         config.DATASET.NUM_CLASSES = int(clusters)
         config.DATASET.LE_PATH = os.path.join(args.relabel_dir, str(clusters) + '_new_le.pkl')
         config.DATASET.TRAIN_LIST = os.path.join(args.relabel_dir, str(clusters) + '_train.pkl')
