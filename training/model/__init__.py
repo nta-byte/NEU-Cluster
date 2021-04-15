@@ -1,4 +1,5 @@
 from .mobilenetv3 import MobileNetV3
+from .resnet import resnet18
 from torchvision import models, transforms
 import torch.nn as nn
 import torch
@@ -19,19 +20,13 @@ def get_model(config):
         model = models.resnet.resnet50(pretrained=pretrained)
         model.fc = nn.Linear(2048, n_class)
     elif config.MODEL.NAME == 'resnet18':
-        model = models.resnet.resnet18(pretrained=pretrained)
+        model = resnet18(pretrained=pretrained)
         model.fc = nn.Linear(512, n_class)
     elif config.MODEL.NAME == 'vgg16':
         model = models.vgg16(pretrained=pretrained)
         model.classifier[6] = nn.Linear(4096, n_class)
 
     if finetune:
-        # state_dict = torch.load(finetune,
-        #                         map_location=lambda storage, loc: storage)
-        # # model.load_state_dict(torch.load(config.MODEL.PRETRAINED,
-        # #                                  map_location=lambda storage, loc: storage))
-        # model.load_state_dict(state_dict, strict=True)
-
         pretrained_dict = torch.load(finetune,
                                      map_location=lambda storage, loc: storage)
         model_dict = model.state_dict()

@@ -10,25 +10,13 @@ from torch.nn.functional import softmax
 
 def train_step(loader, net, crit, optim, dev, total_step, logging, config, debug_steps=100, epo=-1, scheduler=None):
     net.train()
-    # print((loader))
     train_loss = 0
     for i, (images, labels) in enumerate(loader):
-        # print('labels', labels)
         images = images.to(dev)
         labels = labels.to(dev)
-        # print(labels)
-        # print(optim)
-
 
         # Forward pass
         outputs = net(images)
-        # print('outputs', outputs)
-        # print('labels', labels)
-        # outputs = outputs.argmax(1)
-        # values, prob = softmax(outputs, dim=-1).max(-1)
-        # print('predicted', outputs)
-        # print('prob', prob)
-        # print('labels.argmax(1)', labels.argmax(1))
         loss = crit(outputs, labels)
 
         # Backward and optimize
@@ -37,17 +25,14 @@ def train_step(loader, net, crit, optim, dev, total_step, logging, config, debug
         optim.step()
 
         train_loss += loss.item()
-        # _, predicted = outputs.max(1)
 
         if scheduler:
             scheduler.step()
 
         if (i + 1) % debug_steps == 0:
             if scheduler:
-                # print(scheduler.get_last_lr())
                 logging.info(
                     f'Epoch [{epo}/{config.TRAIN.END_EPOCH}], Step [{i + 1}/{total_step}], Loss: {round(float(loss.item()), 4)}, LR:{round(float(scheduler.get_last_lr()[0]), 8)}')
-                # .format(epo, config.TRAIN.END_EPOCH, i + 1, total_step, loss.item()))
             else:
                 logging.info('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'
                              .format(epo, config.TRAIN.END_EPOCH, i + 1, total_step, loss.item()))

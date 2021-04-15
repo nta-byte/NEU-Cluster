@@ -40,7 +40,10 @@ def train_function(args, configuration, step=1):
     clusters = config.DATASET.NUM_CLASSES
 
     # Init save dir
-    save_dir_root = args.save_first_train
+    if step == 1:
+        save_dir_root = args.save_first_train
+    elif step == 3:
+        save_dir_root = args.training_ouput_dir
     save_dir = os.path.join(save_dir_root,
                             f'train_{clusters}_cluster')
     if not os.path.exists(save_dir):
@@ -115,6 +118,8 @@ def train_function(args, configuration, step=1):
                 print("Early stopping")
                 break
         logging.info('--------------------------------------------')
+        if scheduler is not None:
+            scheduler.step()
     return save_best_model
 
 
@@ -206,6 +211,8 @@ def train_function2(args, configuration):
                 print("Early stopping")
                 break
         logging.info('--------------------------------------------')
+        if scheduler is not None:
+            scheduler.step()
     return smallest_loss_weight_path
 
 

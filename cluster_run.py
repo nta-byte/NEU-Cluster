@@ -5,7 +5,8 @@ import os
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.metrics import *
-
+from hdbscan import HDBSCAN
+import umap
 from kneed import KneeLocator
 
 from libs.helper import classification_tools as ct
@@ -49,6 +50,32 @@ def sub_visual(dict_in, title='', save_name=''):
     plt.savefig(save_name)
 
 
+def decrease_dim(args, fc1):
+    print(f'decrease_dim by {args.reduce_dimension}')
+    if args.reduce_dimension == 'umap':
+
+        x = umap.UMAP(
+            n_neighbors=200,
+            min_dist=0.0,
+            n_components=2,
+            # random_state=42,
+            metric='correlation',
+            init='random',
+        ).fit_transform(fc1,
+                        # y=y_gt
+                        )
+
+        # print(embedding.shape)
+    elif args.reduce_dimension == 'pca':
+        pca = PCA(n_components=args.pca_component, svd_solver='full', whiten=True)
+        pca_nw = PCA(n_components=args.pca_component, svd_solver='full', whiten=False)
+        x = pca.fit_transform(fc1)
+        x_nw = pca_nw.fit_transform(fc1)
+        if not args.pca_whitten:
+            x = x_nw
+    return x
+
+
 def clustering(args, logging, data):
     fc1 = data['features']  # array containing fc1 features for each file
     labels = data['labels']  # string labels for each image
@@ -59,14 +86,16 @@ def clustering(args, logging, data):
     dict_adjusted_rand = {}
     dict_cluster_labels = {}
     if not args.use_cache or not os.path.isfile(args.kmeans_k_cache_path):
-
         y_gt = le.transform(labels)  # integer labels for each image
-        pca = PCA(n_components=args.pca_component, svd_solver='full', whiten=True)
-        pca_nw = PCA(n_components=args.pca_component, svd_solver='full', whiten=False)
-        x = pca.fit_transform(fc1)
-        x_nw = pca_nw.fit_transform(fc1)
-        if not args.pca_whitten:
-            x = x_nw
+
+        # pca = PCA(n_components=args.pca_component, svd_solver='full', whiten=True)
+        # pca_nw = PCA(n_components=args.pca_component, svd_solver='full', whiten=False)
+        # x = pca.fit_transform(fc1)
+        # x_nw = pca_nw.fit_transform(fc1)
+        # if not args.pca_whitten:
+        #     x = x_nw
+
+        x = decrease_dim(args, fc1)
 
         k_values = np.arange(3, 17)
         acc_k = np.zeros(k_values.shape)
@@ -284,5 +313,105 @@ def main():
     print_optimal(logging, dict_adjusted_rand, metric='adjusted_rand_score', args=args)
 
 
+def umap_clustering():
+    args, logging = init("experiments/cifar10/flow1_resnet18.yaml")
+    args.cluster_dataset = 'test'
+
+    # extract_feature(args, logging)
+    with open(args.fc1_path, 'rb') as f:
+        data = pickle.load(f)
+
+    fc1 = data['features']  # array containing fc1 features for each file
+    cluster_labels = data['labels']  # string labels for each image
+    le = data['le']
+
+    if not args.use_cache or not os.path.isfile(args.kmeans_k_cache_path):
+        y_gt = le.transform(cluster_labels)  # integer labels for each image
+        embedding = umap.UMAP(
+            n_neighbors=200,
+            min_dist=0.0,
+            n_components=2,
+            # random_state=42,
+            metric='correlation',
+            init='random',
+        ).fit_transform(fc1,
+                        # y=y_gt
+                        )
+
+        print(embedding.shape)
+        plt.scatter(embedding[:, 0], embedding[:, 1], c=y_gt,
+                    s=0.1, cmap='Spectral')
+        plt.savefig('a.png')
+
+        cluster_labels = HDBSCAN(
+            min_samples=100,
+            min_cluster_size=50,
+        ).fit_predict(embedding)
+        # cluster_labels = clusterer.fit_predict(x)
+        # cluster_labels = cluster_labels
+
+        # print(set(cluster_labels))
+        y_pred_ = ct.label_matcher(cluster_labels, y_gt)
+
+        acc = (y_pred_ == y_gt).sum() / len(y_gt)
+        print(round(acc, 3), set(cluster_labels))
+
+        unique, counts = np.unique(cluster_labels, return_counts=True)
+        fr = np.asarray((unique, counts)).T
+        print(fr)
+
+        plt.scatter(embedding[:, 0], embedding[:, 1], c=y_pred_,
+                    s=0.1, cmap='Spectral')
+        plt.savefig('a_predict.png')
+
+        k_values = np.arange(3, 17)
+        acc_k = np.zeros(k_values.shape)
+        rs = np.random.RandomState(seed=987654321)
+        kmeans_total = {}
+        dict_fow_avg = {}
+        dict_adjusted_mutual_info = {}
+        dict_normalized_mutual_info = {}
+        dict_adjusted_rand = {}
+        dict_cluster_labels = {}
+        for i, (k, state) in enumerate(zip(k_values, rs.randint(2 ** 32, size=len(k_values)))):
+            kmeans = KMeans(n_clusters=k, init='k-means++', n_init=args.kmeans_n_init, random_state=state)
+
+            cluster_labels = kmeans.fit_predict(embedding)
+            # dict_cluster_labels[k] = cluster_labels
+            kmeans_total[i] = kmeans
+            labels_unmatched_ = kmeans.labels_
+            y_pred_ = ct.label_matcher(labels_unmatched_, y_gt)
+            acc = (y_pred_ == y_gt).sum() / len(y_gt)
+            acc_k[i] = round(acc, 3)
+            fow_avg = fowlkes_mallows_score(y_gt, cluster_labels)
+            fow_avg = round(float(fow_avg), 3)
+            dict_fow_avg[k] = fow_avg
+
+            adjusted_mutual_info = adjusted_mutual_info_score(y_gt, cluster_labels)
+            adjusted_mutual_info = round(float(adjusted_mutual_info), 3)
+            dict_adjusted_mutual_info[k] = adjusted_mutual_info
+
+            normalized_mutual_info = normalized_mutual_info_score(y_gt, cluster_labels)
+            normalized_mutual_info = round(float(normalized_mutual_info), 3)
+            dict_normalized_mutual_info[k] = normalized_mutual_info
+
+            adjusted_rand = adjusted_rand_score(y_gt, cluster_labels)
+            adjusted_rand = round(float(adjusted_rand), 3)
+            dict_adjusted_rand[k] = adjusted_rand
+
+            sav_figure_name = "{}_{}_.jpg".format(k, acc_k[i])
+            sav_figure_name = os.path.join(args.save_img_1st_step_dir, sav_figure_name)
+            visual(y_pred_, kmeans, le, embedding, sav_figure_name, k)
+            print(
+                "cluster: {} accuracy: {} fow:{} AMI:{} NMI:{} AR:{}".format(
+                    k,
+                    acc_k[i],
+                    dict_fow_avg[k],
+                    dict_adjusted_mutual_info[k],
+                    dict_normalized_mutual_info[k],
+                    dict_adjusted_rand[k],
+                ))
+
+
 if __name__ == '__main__':
-    main()
+    umap_clustering()

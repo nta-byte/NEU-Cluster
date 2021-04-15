@@ -78,13 +78,11 @@ def get_model(args, activation=False):
     if args.model == 'RESNET50':
         model = models.resnet.resnet50(pretrained=True)
         if not activation:
-            # model = nn.Sequential(*list(model.children())[:-1])
             model.fc = nn.Sequential()
     elif args.model == 'RESNET18':
         model = models.resnet.resnet18(pretrained=False)
 
         if not activation:
-            # model = nn.Sequential(*list(model.children())[:-1])
             model.fc = nn.Sequential()
         else:
             model.fc = nn.Linear(512, 10)

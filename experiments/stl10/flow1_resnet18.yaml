@@ -21,6 +21,7 @@ use_cache: False
 use_histeq: True
 kmeans_n_init: 50
 pca_component: 50
+reduce_dimension: "umap" # umap or pca
 pca_whitten: True
 k_min: 3
 k_max: 17

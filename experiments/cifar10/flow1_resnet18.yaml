@@ -19,8 +19,9 @@ cluster_dataset: "train" # train, test and train_test
 kmeans_k_cache_path: "kmeans_acc_vs_k.pickle"
 use_cache: False
 use_histeq: True
-kmeans_n_init: 50
+kmeans_n_init: 500
 pca_component: 50
+reduce_dimension: "umap" # umap or pca
 pca_whitten: True
 k_min: 3
 k_max: 17
@@ -37,5 +38,5 @@ workers: 15
 framework: "pytorch" # pytorch or tf
 model: "RESNET18" # "VGG16" "RESNET50"
 model_path: ""
-pretrained_path: "output_save_flow1/cifar10_RESNET18_pretrain_PCA50_kmeanNinit50_pytorch_histeq_whitten/1st_train/train_10_cluster/resnet18-Epoch-67-Loss-0.614-Acc-0.81.pth"
+pretrained_path: "output_save_flow1/cifar10_RESNET18_pretrain_PCA50_kmeanNinit50_pytorch_histeq_whitten/1st_train/train_10_cluster/resnet18-best.pth"
 reload: False
