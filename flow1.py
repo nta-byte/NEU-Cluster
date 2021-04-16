@@ -21,19 +21,16 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 
 def main():
-    """- step 1 : We'll train our system with original train set."""
-    args, logging = init("experiments/stl10/flow1_resnet18.yaml")
+
+    args, logging = init("experiments/neu-cls/flow1_resnet18.yaml")
     update_config(config, args)
-    args.cluster_dataset = 'train_test'
-    # best_loss_weight = train_function(args, config, step=1)
-    # args.pretrained_path = best_loss_weight
+
+    """- step 1 : We'll train our system with original train set."""
+    args.cluster_dataset = 'train'
+    args.pretrained_path = train_function(args, config, step=1)
 
     """- step 2: after that, We extract feature from test set and cluster them by optimal number cluster algorithm."""
-    # if os.path.exists(args.fc1_dir):
-    #     print()
-    # else:
     args.cluster_dataset = 'test'
-
     extract_feature(args, logging)
     with open(args.fc1_path, 'rb') as f:
         data = pickle.load(f)

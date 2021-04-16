@@ -87,14 +87,6 @@ def clustering(args, logging, data):
     dict_cluster_labels = {}
     if not args.use_cache or not os.path.isfile(args.kmeans_k_cache_path):
         y_gt = le.transform(labels)  # integer labels for each image
-
-        # pca = PCA(n_components=args.pca_component, svd_solver='full', whiten=True)
-        # pca_nw = PCA(n_components=args.pca_component, svd_solver='full', whiten=False)
-        # x = pca.fit_transform(fc1)
-        # x_nw = pca_nw.fit_transform(fc1)
-        # if not args.pca_whitten:
-        #     x = x_nw
-
         x = decrease_dim(args, fc1)
 
         k_values = np.arange(3, 17)

@@ -41,8 +41,9 @@ def init(config_path):
     framework = 'pytorch' if args.framework == 'pytorch' else 'tf'
     use_histeq = "histeq" if args.use_histeq else "nohisteq"
     pca_whitten = "whitten" if args.pca_whitten else "nowhitten"
+    reduce_dimension =  f"reduce_dim_PCA{args.pca_component}" if args.reduce_dimension == 'pca' else f"reduce_dim_UMAP"
     pretrained = "pretrain" if args.pretrained_path else "transfer"
-    output_dir_name = f"{dataset}_{args.model}_{pretrained}_PCA{args.pca_component}_kmeanNinit{args.kmeans_n_init}_{framework}_{use_histeq}_{pca_whitten}"
+    output_dir_name = f"{dataset}_{args.model}_{pretrained}_{reduce_dimension}_kmeanNinit{args.kmeans_n_init}_{framework}_{use_histeq}_{pca_whitten}"
     args.save_dir = os.path.join(args.save_dir, output_dir_name)
 
     fc1_file_name = f'{args.model}_{pretrained}_fc1_features_std_{framework}_{use_histeq}.pickle'

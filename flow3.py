@@ -1,71 +1,60 @@
 """
-3. We'll use the whole dataset.
+1. We consider public dataset is splitted into 2 sets (train and test set).
 
-- step 1: Use our system with the optimal number cluster model to generate new labels .
+- step 1 : We'll train our system with original train set.
 
-- step 2: train and valid with new labels retrieved from step 2 --> check accuracy.
+- step 2: after that, We extract feature from test set and cluster them by optimal number cluster algorithm.
 
+- step 3: train and valid test set with new labels retrieved from step 2 --> check accuracy.
 """
 
 import os
 import pickle
-import torch
-
-from train_first import train_function, train_function2
+from train_first import train_function
 from libs.utils.yaml_config import init
 from training.config import update_config, config
 from create_pretext_pytorch import extract_feature
 from cluster_run import clustering
 from libs.relabeling import get_relabeling
-from libs.pretext.utils import get_model
-from libs.pretext import get_data_preprocess
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 
 def main():
+
     args, logging = init("experiments/neu-cls/flow3_resnet18.yaml")
     update_config(config, args)
-    """- step 1: make new labels for the datatset by merging 2 classes into 1 randomly -> we got k classes."""
-    # merge  randomly class
-    # relabel data
 
-    """- step 2: train classifier with k classes."""
-    # train
-    # train_function2(args, config)
+    """- step 1: We extract feature from test set and cluster them by optimal number cluster algorithm."""
+    # args.cluster_dataset = 'train_test'
+    args.pretrained_path = ''
 
-    """- step 3: extract feature and cluster the datatset by optimal number cluster algorithm."""
-    # extract
-    # clustering
-    # if os.path.exists(args.fc1_dir):
-    #     print()
-    # else:
-    extract_feature(args, logging, class_merging=True)
+    extract_feature(args, logging)
     with open(args.fc1_path, 'rb') as f:
         data = pickle.load(f)
     print('start clustering')
     opt_clst = clustering(args, logging, data)
-    print(opt_clst)
-    opt_clst = list(set(opt_clst))
+
     # relabel data
     print('start relabeling data')
     relabeling = get_relabeling(args)(args, data)
     relabeling.load_state()
     relabeling.process_relabel()
-    del relabeling
 
-    """- step 4: train and valid with new labels retrieved from step 3 --> check accuracy."""
-    # train on trainset and validate on test set
+    """- step 2: train and valid test set with new labels retrieved from step 2 --> check accuracy."""
+    opt_clst = list(set(opt_clst))
+    print('best cluster:', opt_clst)
     for clusters in opt_clst:
-    # clusters = 10
+        print('clusters', clusters)
+
         config.DATASET.NUM_CLASSES = int(clusters)
         config.DATASET.LE_PATH = os.path.join(args.relabel_dir, str(clusters) + '_new_le.pkl')
         config.DATASET.TRAIN_LIST = os.path.join(args.relabel_dir, str(clusters) + '_train.pkl')
         config.DATASET.VAL_LIST = os.path.join(args.relabel_dir, str(clusters) + '_test.pkl')
-        config.MODEL.PRETRAINED = False
-        config.TRAIN.FINETUNE = args.pretrained_path
-        config.TRAIN.BEGIN_EPOCH = 0
-        config.TRAIN.END_EPOCH = 100
+        config.MODEL.PRETRAINED = True
+        # config.TRAIN.FINETUNE = args.pretrained_path
+        # config.TRAIN.BEGIN_EPOCH = 0
+        # config.TRAIN.END_EPOCH = 50
         train_function(args, config, step=3)
 
 

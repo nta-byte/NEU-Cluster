@@ -27,24 +27,17 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 
 def main():
-    args, logging = init("experiments/cifar10/flow2_resnet18.yaml")
+    args, logging = init("experiments/neu-cls/flow2_resnet18.yaml")
     update_config(config, args)
-    """- step 1: make new labels for the datatset by merging 2 classes into 1 randomly -> we got k classes."""
-    # merge  randomly class
-    # relabel data
-
-    """- step 2: train classifier with k classes."""
+    """
+    + step 1: make new labels for the datatset by merging 2 classes into 1 randomly -> we got k classes.
+    + step 2: train classifier with k classes."""
     # train
-    args.cluster_dataset = 'train'
-    smallest_loss_weight_path = train_function2(args, config)
+    args.cluster_dataset = 'train_test'
+    args.pretrained_path = train_function2(args, config)
 
     """- step 3: extract feature and cluster the datatset by optimal number cluster algorithm."""
-    # extract
-    # clustering
-    # if os.path.exists(args.fc1_dir):
-    #     print()
-    # else:
-    args.cluster_dataset = 'test'
+
     extract_feature(args, logging, class_merging=True)
     with open(args.fc1_path, 'rb') as f:
         data = pickle.load(f)
@@ -70,7 +63,7 @@ def main():
         config.MODEL.PRETRAINED = False
         config.TRAIN.FINETUNE = args.pretrained_path
         config.TRAIN.BEGIN_EPOCH = 0
-        config.TRAIN.END_EPOCH = 100
+        config.TRAIN.END_EPOCH = 20
         train_function(args, config, step=3)
 
 

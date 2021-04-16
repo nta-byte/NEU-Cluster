@@ -22,8 +22,8 @@ MODEL:
 TRAIN:
   FINETUNE: ''
   IMAGE_SIZE:
-    - 96
-    - 96
+    - 200
+    - 200
   BATCH_SIZE: 128
   SHUFFLE: true
   BEGIN_EPOCH: 0
@@ -35,10 +35,10 @@ TRAIN:
   PRINT_FREQ: 100
   RANDOM_CROP: true
   RESIZE: false
-  VALIDATION_EPOCH: 2
+  VALIDATION_EPOCH: 1
 
 TEST:
   IMAGE_SIZE:
-    - 96
-    - 96
-  BATCH_SIZE: 128
+    - 200
+    - 200
+  BATCH_SIZE: 64

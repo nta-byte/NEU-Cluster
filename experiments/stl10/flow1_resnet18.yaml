@@ -5,7 +5,7 @@ save_img_1st_step_dir: "1st_step"
 save_first_train: "1st_train"
 
 # general
-dataset_root: "/media/dl-team/data1/ntanh/data"
+dataset_root: "/mnt/data1/ntanh/data"
 data_preprocess_path: ""
 le_path: "label_encoder.pickle" # label encoder model which converts string labels to integers.
 fc1_dir: "raw_features"

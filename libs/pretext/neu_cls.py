@@ -12,17 +12,25 @@ import torch.nn.functional as F
 import torch
 import torchvision
 
-from libs.dataset.preprocess import get_list_files
+from libs.dataset.preprocess import get_list_files, data_preprocess
 from libs.helper.classification_tools import CustomLabelEncoder
 from training.utils.loader import onehot
 from libs.pretext.utils import get_data_list, load_images, Dataset
 from training.utils.loader import NEU_Dataset
 
 
+def neu_data_preprocess(args):
+    list_images = get_list_files(args.dataset_root)
+    print(len(list_images))
+    data_preprocess(list_images, 'neu-cls', args.data_preprocess_path)
+
+
 class DataPreprocess:
     def __init__(self, argus, class_merging=False):
         self.args = argus
         print(f"dataset: {self.args.dataset}")
+        if not os.path.exists(self.args.data_preprocess_path):
+            neu_data_preprocess(self.args)
         self.files, self.labels = get_data_list(self.args)
         # files = sorted(files)  # returns a list of all of the images in the directory, sorted by filename.
         # print(files)

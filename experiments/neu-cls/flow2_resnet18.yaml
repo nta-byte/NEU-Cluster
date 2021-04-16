@@ -5,7 +5,8 @@ save_img_1st_step_dir: "1st_step"
 save_first_train: "1st_train"
 
 # general
-data_preprocess_path: "/data20.04/home/ntanh/SDC_SALa_Clustering/CODE/NEU-Cluster/data/neu-cls"
+data_preprocess_path: "data"
+dataset_root: "/mnt/data1/ntanh/data/neu_surface_defect/NEU-CLS"
 le_path: "label_encoder.pickle" # label encoder model which converts string labels to integers.
 fc1_dir: "raw_features"
 relabel_dir: "relabel"
@@ -20,13 +21,14 @@ use_cache: False
 use_histeq: True
 kmeans_n_init: 50
 pca_component: 50
+reduce_dimension: "umap" # umap or pca
 pca_whitten: True
 k_min: 3
 k_max: 17
 
 # train options
 batch_size: 256
-image_size: 224
+image_size: 96
 cfg: "training/experiments/neu-cls/flow2_resnet18.yaml"
 # general
 seed: 42
@@ -36,5 +38,5 @@ workers: 8
 framework: "pytorch" # pytorch or tf
 model: "RESNET18" # "VGG16" "RESNET50"
 model_path: ""
-pretrained_path: "output_save_flow2/neu-cls_RESNET18_pretrain_PCA50_kmeanNinit50_pytorch_histeq_whitten/1st_train/train_3_cluster/resnet18-Epoch-4-Loss-0.018-Acc-0.99.pth"
+pretrained_path: "output_save_flow2/neu-cls_RESNET18_pretrain_PCA50_kmeanNinit50_pytorch_histeq_whitten/relabel/output_training/train_6_cluster/resnet18-Epoch-34-Loss-0.018-Acc-0.99.pth"
 reload: False

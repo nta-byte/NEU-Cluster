@@ -79,13 +79,15 @@ def get_model(args, activation=False):
         model = models.resnet.resnet50(pretrained=True)
         if not activation:
             model.fc = nn.Sequential()
+        else:
+            model.fc = nn.Linear(2048, 6)
     elif args.model == 'RESNET18':
-        model = models.resnet.resnet18(pretrained=False)
+        model = models.resnet.resnet18(pretrained=True)
 
         if not activation:
             model.fc = nn.Sequential()
         else:
-            model.fc = nn.Linear(512, 10)
+            model.fc = nn.Linear(512, 6)
     elif args.model == 'VGG16':
         model = models.vgg16(pretrained=True)
         if not activation:
@@ -114,7 +116,7 @@ def get_data_list(args):
         files += _get_list_files(os.path.join(args.data_preprocess_path, 'test', 'images_preprocessed'),
                                  args.use_histeq)
     else:
-        files = _get_list_files(os.path.join(args.data_preprocess_path, 'images_preprocessed'),
+        files = _get_list_files(os.path.join(args.data_preprocess_path,args.dataset,  'images_preprocessed'),
                                 args.use_histeq)
         # files = _get_list_files(args.data_preprocess_path, args.use_histeq)
     # print(len(files))
