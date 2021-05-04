@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" autoUpload="On explicit save action" serverName="root@107.120.70.138:9000" remoteFilesAllowedToDisappearOnAutoupload="false" autoUploadExternalChanges="true">
+    <serverData>
+      <paths name="root@107.120.70.138:9000">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/shared-dir/duong/workspace/NEU-Cluster" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="root@107.120.70.138:9000 (1)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/shared-dir/duong/workspace/NEU-Cluster" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+    <option name="myAutoUpload" value="ON_EXPLICIT_SAVE" />
+  </component>
+</project>

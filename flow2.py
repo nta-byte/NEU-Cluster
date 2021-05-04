@@ -27,8 +27,9 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 
 def main():
-    args, logging = init("experiments/neu-cls/flow2_resnet18.yaml")
+    args, logging = init("experiments/mlcc/flow2_resnet18.yaml")
     update_config(config, args)
+    # print("[update_config]config: ", config)
     """
     + step 1: make new labels for the datatset by merging 2 classes into 1 randomly -> we got k classes.
     + step 2: train classifier with k classes."""
@@ -58,8 +59,12 @@ def main():
         # clusters = 10
         config.DATASET.NUM_CLASSES = int(clusters)
         config.DATASET.LE_PATH = os.path.join(args.relabel_dir, str(clusters) + '_new_le.pkl')
-        config.DATASET.TRAIN_LIST = os.path.join(args.relabel_dir, str(clusters) + '_train.pkl')
-        config.DATASET.VAL_LIST = os.path.join(args.relabel_dir, str(clusters) + '_test.pkl')
+        if args.dataset == "mlcc":
+            config.DATASET.TRAIN_LIST = os.path.join(args.relabel_dir, str(clusters) + '_train.txt')
+            config.DATASET.VAL_LIST = os.path.join(args.relabel_dir, str(clusters) + '_test.txt')
+        else:
+            config.DATASET.TRAIN_LIST = os.path.join(args.relabel_dir, str(clusters) + '_train.pkl')
+            config.DATASET.VAL_LIST = os.path.join(args.relabel_dir, str(clusters) + '_test.pkl')
         config.MODEL.PRETRAINED = False
         config.TRAIN.FINETUNE = args.pretrained_path
         config.TRAIN.BEGIN_EPOCH = 0
