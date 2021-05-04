@@ -136,8 +136,7 @@ class Dataset(torch.utils.data.Dataset):
             img = self.transform(img)
         # print(img.shape)
 
-        target = np.array(target).astype(np.float32)
-
+        target = np.argmax(np.array(target).astype(np.long))
         return img, target
 
     def __len__(self):
@@ -148,6 +147,50 @@ class Dataset(torch.utils.data.Dataset):
 
 
 class NEU_Dataset(torch.utils.data.Dataset):
+    def __init__(self, imgList=None, dataList=None, transform=None, augment=None, le=None, label_file=None,
+                 label_list=None):
+        self.transform = transform
+        self.augment = augment
+        self.imgList = imgList
+        self.dataList = dataList
+
+        # print(self.dataList)
+        if le is None:
+            self.le = CustomLabelEncoder()
+            self.le.fit(self.dataList)
+        else:
+            self.le = le
+        self.dataList_transformed = self.le.transform(self.dataList)
+        # print(list(self.le.classes_))
+        # print(self.dataList_transformed)
+        # b = np.zeros((self.dataList_transformed.size, self.dataList_transformed.max() + 1))
+        # b[np.arange(self.dataList_transformed.size), self.dataList_transformed] = 1
+        # print(self.dataList_transformed)
+        # self.dataList_transformed = b
+
+    def __getitem__(self, index):
+        imgpath = self.imgList[index]
+        target = self.dataList_transformed[index]
+
+        img = Image.open(imgpath).convert('RGB')
+        if self.augment is not None:
+            img = self.augment(np.array(img))
+            # img = Image.fromarray(img)
+        if self.transform is not None:
+            img = self.transform(img)
+        # print(img.shape)
+
+        target = np.array(target).astype(np.long)
+
+        return img, target
+
+    def __len__(self):
+        return len(self.imgList)
+
+    def get_classNum(self):
+        return len(self.dataList[0])
+
+class MLCCDataset(torch.utils.data.Dataset):
     def __init__(self, imgList=None, dataList=None, transform=None, augment=None, le=None, label_file=None,
                  label_list=None):
         self.transform = transform
