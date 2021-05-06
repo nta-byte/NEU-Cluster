@@ -22,15 +22,15 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 def main():
 
-    args, logging = init("experiments/neu-cls/flow1_resnet18.yaml")
+    args, logging = init("experiments/mlcc/flow1_resnet18.yaml")
     update_config(config, args)
 
     """- step 1 : We'll train our system with original train set."""
-    args.cluster_dataset = 'train'
+    args.cluster_dataset = 'train_test'
     args.pretrained_path = train_function(args, config, step=1)
 
     """- step 2: after that, We extract feature from test set and cluster them by optimal number cluster algorithm."""
-    args.cluster_dataset = 'test'
+    # args.cluster_dataset = 'test'
     extract_feature(args, logging)
     with open(args.fc1_path, 'rb') as f:
         data = pickle.load(f)
@@ -54,10 +54,10 @@ def main():
         config.DATASET.LE_PATH = os.path.join(args.relabel_dir, str(clusters) + '_new_le.pkl')
         config.DATASET.TRAIN_LIST = os.path.join(args.relabel_dir, str(clusters) + '_train.pkl')
         config.DATASET.VAL_LIST = os.path.join(args.relabel_dir, str(clusters) + '_test.pkl')
-        config.MODEL.PRETRAINED = False
-        config.TRAIN.FINETUNE = args.pretrained_path
-        config.TRAIN.BEGIN_EPOCH = 0
-        config.TRAIN.END_EPOCH = 100
+        config.MODEL.PRETRAINED = True
+        # config.TRAIN.FINETUNE = args.pretrained_path
+        # config.TRAIN.BEGIN_EPOCH = 0
+        # config.TRAIN.END_EPOCH = 100
         train_function(args, config, step=3)
 
 

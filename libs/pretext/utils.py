@@ -65,7 +65,7 @@ def load_state(weight_path, net):
     pretrained_dict = torch.load(weight_path)
     model_dict = net.state_dict()
     pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
-    print(len(pretrained_dict.keys()), len(model_dict.keys()))
+    # print(len(pretrained_dict.keys()), len(model_dict.keys()))
     model_dict.update(pretrained_dict)
     net.load_state_dict(model_dict)
     # for key in sorted(model_dict.keys()):
@@ -98,7 +98,7 @@ def get_model(args, activation=False):
     return model
 
 
-def get_data_list(args):
+def get_data_list(args, shuffle=True):
     def _get_list_files(data_preprocess_path, use_histeq):
         if use_histeq:
             data_preprocess_path = os.path.join(data_preprocess_path, 'images_histeq_resize')
@@ -116,14 +116,14 @@ def get_data_list(args):
         files += _get_list_files(os.path.join(args.data_preprocess_path, 'test', 'images_preprocessed'),
                                  args.use_histeq)
     else:
-        files = _get_list_files(os.path.join(args.data_preprocess_path,args.dataset,  'images_preprocessed'),
+        files = _get_list_files(os.path.join(args.data_preprocess_path, args.dataset, 'images_preprocessed'),
                                 args.use_histeq)
         # files = _get_list_files(args.data_preprocess_path, args.use_histeq)
     # print(len(files))
     # ## Shuffle the filenames so they appear randomly in the dataset.
-    rs = np.random.RandomState(seed=749976)
-    rs.shuffle(files)
+    if shuffle:
+        rs = np.random.RandomState(seed=749976)
+        rs.shuffle(files)
 
     labels = extract_labels(files)
-    # print('labels', labels)
     return files, labels

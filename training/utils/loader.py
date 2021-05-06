@@ -190,6 +190,7 @@ class NEU_Dataset(torch.utils.data.Dataset):
     def get_classNum(self):
         return len(self.dataList[0])
 
+
 class MLCCDataset(torch.utils.data.Dataset):
     def __init__(self, imgList=None, dataList=None, transform=None, augment=None, le=None, label_file=None,
                  label_list=None):
@@ -205,12 +206,6 @@ class MLCCDataset(torch.utils.data.Dataset):
         else:
             self.le = le
         self.dataList_transformed = self.le.transform(self.dataList)
-        # print(list(self.le.classes_))
-        # print(self.dataList_transformed)
-        # b = np.zeros((self.dataList_transformed.size, self.dataList_transformed.max() + 1))
-        # b[np.arange(self.dataList_transformed.size), self.dataList_transformed] = 1
-        # print(self.dataList_transformed)
-        # self.dataList_transformed = b
 
     def __getitem__(self, index):
         imgpath = self.imgList[index]

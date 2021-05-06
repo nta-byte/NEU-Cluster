@@ -17,13 +17,14 @@ def train_step(loader, net, crit, optim, dev, total_step, logging, config, debug
 
         # Forward pass
         outputs = net(images)
+
         loss = crit(outputs, labels)
 
         # Backward and optimize
         optim.zero_grad()
         loss.backward()
         optim.step()
-
+        # print(loss.item())
         train_loss += loss.item()
 
         if scheduler:
@@ -138,10 +139,9 @@ class ClsPostProcess(object):
             preds = preds.numpy()
 
         pred_idxs = preds.argmax(axis=1)
-        # print('1', preds)
-        # print('pred_idxs',pred_idxs)
-        decode_out = [(self.label_list[idx], preds[i, idx])
-                      for i, idx in enumerate(pred_idxs)]
+        # print('1', preds, preds.shape)
+        # print('pred_idxs', pred_idxs, pred_idxs.shape)
+        decode_out = [(self.label_list[idx], preds[i, idx]) for i, idx in enumerate(pred_idxs)]
         if label is None:
             return decode_out
         # label = label.argmax(1)

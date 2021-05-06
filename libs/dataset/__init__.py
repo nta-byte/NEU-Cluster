@@ -4,7 +4,8 @@ import torch.utils.data as data
 import torchvision.transforms as transforms
 import torch.nn.functional as F
 # from training.utils.loader import DataLoader
-from training.utils.loader import Dataset, onehot, NEU_Dataset
+from training.utils.loader import Dataset, onehot, NEU_Dataset, MLCCDataset
+from libs.pretext.mlcc import mlcc_data_preprocess
 from libs.helper import classification_tools as ct
 from libs.pretext.utils import get_data_list, load_images
 # from libs.pretext.utils import Dataset as NEU_Dataset
@@ -19,6 +20,8 @@ from PIL import Image
 
 class DataPreprocess:
     def __init__(self, config, args, step=1):
+        self.args = args
+        self.config = config
         if args.dataset == 'mlcc':
             normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
             transform_train = transforms.Compose([
@@ -27,35 +30,83 @@ class DataPreprocess:
                 transforms.ToTensor(),
                 normalize
             ])
+            self.files, self.labels = get_data_list(self.args, shuffle=False)
+            self.le = CustomLabelEncoder()
+            # self.le.fit(self.labels)
+            self.le.mapper = {'1': 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5, '7': 6, '8': 7, '9': 8, 'etc': 9}
+            self.classes = list(self.le.mapper.values())
+            if args.cluster_dataset == 'train_test':
+                self.train_files = self.files[:950]
+                self.train_labels = self.labels[:950]
+                self.test_files = self.files[950:]
+                self.test_labels = self.labels[950:]
 
-            transform_val = transforms.Compose([
-                transforms.Resize((config.TRAIN.IMAGE_SIZE[0], config.TRAIN.IMAGE_SIZE[1]),
-                                  interpolation=Image.NEAREST),
-                transforms.ToTensor(),  # 3*H*W, [0, 1]
-                normalize])
+                trainset = MLCCDataset(imgList=self.train_files, dataList=self.train_labels, le=self.le,
+                                       transform=transform_train)
+                testset = MLCCDataset(imgList=self.test_files, dataList=self.test_labels, le=self.le,
+                                      transform=transform_train)
 
-            train_dataset = Dataset(
-                label_file=config.DATASET.TRAIN_LIST,
-                transform=transform_train, augment=None)
+                if step == 3:
+                    with open(config.DATASET.LE_PATH, 'rb') as f:
+                        new_le = pickle.load(f)
+                    with open(config.DATASET.TRAIN_LIST, 'rb') as f:
+                        train_label = pickle.load(f)
+                    with open(config.DATASET.VAL_LIST, 'rb') as f:
+                        test_label = pickle.load(f)
+                    trainset.dataList_transformed = new_le.transform(train_label.tolist())
+                    testset.dataList_transformed = new_le.transform(test_label)
+                    self.classes = list(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])).keys())
+                    print('new class name: ', self.classes)
+                    print('new mapper:', new_le.mapper)
+            elif args.cluster_dataset == 'train':
 
-            le = train_dataset.le
-            print(le.mapper)
-            self.classes = list(le.mapper.values())
+                self.train_files = self.files[:950]
+                self.train_labels = self.labels[:950]
 
-            val_dataset = Dataset(
-                label_file=config.DATASET.VAL_LIST,
-                transform=transform_val, augment=None, le=le)
+                dataset = MLCCDataset(imgList=self.train_files, dataList=self.train_labels, le=self.le,
+                                      transform=transform_train)
+
+                if step == 3:
+                    with open(config.DATASET.LE_PATH, 'rb') as f:
+                        new_le = pickle.load(f)
+                    with open(config.DATASET.TRAIN_LIST, 'rb') as f:
+                        train_label = pickle.load(f)
+                    dataset.dataList_transformed = new_le.transform(train_label.tolist())
+                    self.classes = list(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])).keys())
+                    print('new class name: ', self.classes)
+                    print('new mapper:', new_le.mapper)
+
+                train_len = int(len(dataset) * .8)
+                trainset, testset = torch.utils.data.random_split(dataset, [train_len, len(dataset) - train_len])
+            elif args.cluster_dataset == 'test':
+                self.test_files = self.files[950:]
+                self.test_labels = self.labels[950:]
+                dataset = MLCCDataset(imgList=self.test_files, dataList=self.test_labels, le=self.le,
+                                      transform=transform_train)
+
+                if step == 3:
+                    with open(config.DATASET.LE_PATH, 'rb') as f:
+                        new_le = pickle.load(f)
+                    with open(config.DATASET.VAL_LIST, 'rb') as f:
+                        test_label = pickle.load(f)
+                    dataset.dataList_transformed = new_le.transform(test_label.tolist())
+                    self.classes = list(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])).keys())
+                    print('new class name: ', self.classes)
+                    print('new mapper:', new_le.mapper)
+                train_len = int(len(dataset) * .5)
+                trainset, testset = torch.utils.data.random_split(dataset,
+                                                                  [train_len, len(dataset) - train_len])
+                trainset, testset = trainset.dataset, testset.dataset
 
             # Data loader
-            self.train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
-                                                            batch_size=config.TRAIN.BATCH_SIZE,
-                                                            num_workers=config.WORKERS,
-                                                            shuffle=True)
+            self.train_loader = torch.utils.data.DataLoader(trainset, batch_size=config.TRAIN.BATCH_SIZE,
+                                                            shuffle=True, num_workers=config.WORKERS)
 
-            self.val_loader = torch.utils.data.DataLoader(dataset=val_dataset,
-                                                          batch_size=config.TEST.BATCH_SIZE,
-                                                          num_workers=config.WORKERS,
-                                                          shuffle=False)
+            self.val_loader = torch.utils.data.DataLoader(testset, batch_size=config.TEST.BATCH_SIZE,
+                                                          shuffle=False, num_workers=config.WORKERS)
+            #
+            # self.loader = torch.utils.data.DataLoader(dataset, batch_size=self.args.batch_size,
+            #                                           shuffle=False, num_workers=self.args.workers)
 
         elif args.dataset == 'cifar10':
             normalize = transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
@@ -254,10 +305,7 @@ class DataPreprocess:
                 transforms.ToTensor(),
                 normalize
             ])
-            transform_val = transforms.Compose([
-                transforms.Resize((config.TRAIN.IMAGE_SIZE[0], config.TRAIN.IMAGE_SIZE[1])),
-                transforms.ToTensor(),  # 3*H*W, [0, 1]
-                normalize])
+
             self.files, self.labels = get_data_list(args)
 
             self.le = CustomLabelEncoder()
@@ -273,9 +321,6 @@ class DataPreprocess:
 
             self.val_loader = torch.utils.data.DataLoader(testset, batch_size=config.TEST.BATCH_SIZE,
                                                           shuffle=False, num_workers=config.WORKERS)
-            # dataiter = iter(self.val_loader)
-            # images, labels = dataiter.next()
-            # # print(labels)
 
 
 if __name__ == '__main__':

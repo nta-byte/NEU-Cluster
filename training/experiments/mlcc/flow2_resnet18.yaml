@@ -10,7 +10,7 @@ DATASET:
   TEST_DIR: ''
   VAL_DIR: ''
   TRAIN_DIR: ''
-  NUM_CLASSES: 10
+  NUM_CLASSES: 5
   LE_PATH: ''
 MODEL:
   NAME: resnet18

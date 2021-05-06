@@ -151,9 +151,9 @@ def train_function2(args, configuration):
     DataPreprocess = get_data_preprocess(args)
     dp = DataPreprocess(args, class_merging=True)
     train_loader, val_loader = dp.train_loader, dp.val_loader
-    # print(dp.classes)
 
     # model prepare
+    config.DATASET.NUM_CLASSES = len(dp.classes)
     model = get_model(configuration)
     model = model.to(device)
     # print(model)
