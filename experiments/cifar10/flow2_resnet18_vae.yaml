@@ -8,12 +8,12 @@ save_first_train: "1st_train"
 dataset_root: "/mnt/data1/ntanh/data"
 data_preprocess_path: ""
 le_path: "label_encoder.pickle" # label encoder model which converts string labels to integers.
-fc1_dir: "raw_features"
+fc1_dir: "raw_features_train"
 relabel_dir: "relabel"
 training_ouput_dir: "output_training"
 
 # cluster dataset
-cluster_dataset: "test" # train, test and train_test
+cluster_dataset: "train" # train, test and train_test
 
 # cluster
 kmeans_k_cache_path: "kmeans_acc_vs_k.pickle"

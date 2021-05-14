@@ -1,0 +1,49 @@
+general:
+  save_dir: "output_save_flow2"
+  save_img_1st_step_dir: "1st_step"
+  save_first_train: "1st_train"
+  dataset_root: "/mnt/data1/ntanh/data"
+  data_preprocess_path: ""
+
+pretext_params:
+  le_path: "label_encoder.pickle" # label encoder model which converts string labels to integers.
+  fc1_dir: "raw_features"
+  relabel_dir: "relabel"
+
+dataset_params:
+  name: "cifar10" # neu-cls or neu-cls-64
+  use_histeq: True
+
+# cluster dataset
+cluster_dataset: "test" # train, test and train_test
+reduce_dimension: "umap" # umap or pca or vae
+
+vae_params:
+
+
+pca_params:
+  pca_whitten: True
+  pca_component: 50
+
+kmean_params:
+  k_min: 3
+  k_max: 17
+  kmeans_n_init: 50
+  kmeans_k_cache_path: "kmeans_acc_vs_k.pickle"
+  use_cache: True
+
+train_params:
+  batch_size: 256
+  image_size: 224
+  cfg: "training/experiments/cifar10/flow2_resnet18.yaml"
+  # general
+  seed: 42
+  workers: 8
+  training_ouput_dir: "output_training"
+
+model_params:
+  framework: "pytorch" # pytorch or tf
+  model: "RESNET18" # "VGG16" "RESNET50"
+  model_path: ""
+  pretrained_path: "output_save_flow2/cifar10_RESNET18_transfer_PCA30_kmeanNinit50_pytorch_histeq_whitten/relabel/output_training/train_5_cluster/resnet18-Epoch-180-Loss-2.306-Acc-0.85.pth"
+  reload: False

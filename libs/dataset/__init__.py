@@ -312,6 +312,21 @@ class DataPreprocess:
             self.le.fit(self.labels)
             self.classes = list(dict(sorted(self.le.mapper.items(), key=lambda item: item[1])).keys())
             dataset = NEU_Dataset(imgList=self.files, dataList=self.labels, le=self.le, transform=transform_train)
+            if step == 3:
+                with open(config.DATASET.LE_PATH, 'rb') as f:
+                    new_le = pickle.load(f)
+                with open(config.DATASET.TRAIN_LIST, 'rb') as f:
+                    relabeled_data = pickle.load(f)
+
+                # print(type(train_label), train_label)
+                # print('11111111111111111111111111',relabeled_data)
+                dataset.dataList_transformed = new_le.transform(relabeled_data)
+                # print(new_le.mapper)
+                # print(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])))
+                # print(list(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])).keys()))
+                self.classes = list(dict(sorted(new_le.mapper.items(), key=lambda item: item[1])).keys())
+                print('new class name: ', self.classes)
+                print('new mapper:', new_le.mapper)
             # print(len(dataset))
             train_len = int(len(dataset) * .8)
             trainset, testset = torch.utils.data.random_split(dataset, [train_len, len(dataset) - train_len])

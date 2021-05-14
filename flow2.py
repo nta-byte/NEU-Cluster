@@ -25,13 +25,13 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 
 def main():
-    args, logging = init("experiments/mlcc/flow2_resnet18.yaml")
+    args, logging = init("experiments/stl10/flow2_resnet50.yaml")
     update_config(config, args)
     """
     + step 1: make new labels for the datatset by merging 2 classes into 1 randomly -> we got k classes.
     + step 2: train classifier with k classes."""
     # train
-    args.cluster_dataset = 'train_test'
+    args.cluster_dataset = 'train'
     args.pretrained_path = train_function2(args, config)
 
     """- step 3: extract feature and cluster the datatset by optimal number cluster algorithm."""

@@ -34,20 +34,20 @@ class DataPreprocess:
         self.files, self.labels = get_data_list(self.args)
         # files = sorted(files)  # returns a list of all of the images in the directory, sorted by filename.
         # print(files)
-        print('first 10 files: {}'.format(self.files[:10]))
-        print('first 10 labels: {}'.format(self.labels[:10]))
+        # print('first 10 files: {}'.format(self.files[:10]))
+        # print('first 10 labels: {}'.format(self.labels[:10]))
 
         self.le = CustomLabelEncoder()
         self.le.fit(self.labels)
-        print(self.le.mapper)
+        # print(self.le.mapper)
         self.class_to_idx = self.le.mapper
 
         labels_int = self.le.transform(self.labels[:10])
         labels_str = self.le.inverse_transform(labels_int)
 
         print('label encodings: {}'.format(self.le.mapper))
-        print('first 10 integer labels: {}'.format(labels_int))
-        print('first 10 string labels: {}'.format(labels_str))
+        # print('first 10 integer labels: {}'.format(labels_int))
+        # print('first 10 string labels: {}'.format(labels_str))
         transform_pipeline = transforms.Compose([
             # transforms.Resize(min_img_size, interpolation=Image.NEAREST),
             transforms.ToTensor(),
