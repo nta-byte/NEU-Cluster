@@ -41,7 +41,10 @@ def init(config_path):
     framework = 'pytorch' if args.framework == 'pytorch' else 'tf'
     use_histeq = "histeq" if args.use_histeq else "nohisteq"
     pca_whitten = "whitten" if args.pca_whitten else "nowhitten"
-    reduce_dimension =  f"reduce_dim_PCA{args.pca_component}" if args.reduce_dimension == 'pca' else f"reduce_dim_UMAP"
+    if args.reduce_dimension == 'pca':
+        reduce_dimension = f"reduce_dim_PCA{args.pca_component}"
+    else:
+        reduce_dimension = f"reduce_dim_{args.reduce_dimension.upper()}"
     pretrained = "pretrain" if args.pretrained_path else "transfer"
     output_dir_name = f"{dataset}_{args.model}_{pretrained}_{reduce_dimension}_kmeanNinit{args.kmeans_n_init}_{framework}_{use_histeq}_{pca_whitten}"
     args.save_dir = os.path.join(args.save_dir, output_dir_name)
@@ -49,6 +52,8 @@ def init(config_path):
     fc1_file_name = f'{args.model}_{pretrained}_fc1_features_std_{framework}_{use_histeq}.pickle'
     args.fc1_dir = os.path.join(args.save_dir, args.fc1_dir)
     args.fc1_path = os.path.join(args.fc1_dir, fc1_file_name)
+    if args.reduce_dimension == 'vae':
+        args.fc1_path_vae = os.path.join(args.fc1_dir, f'{args.model}_{pretrained}_fc1_features_std_{framework}_{use_histeq}_vae_traindata.pickle')
     args.save_img_1st_step_dir = os.path.join(args.save_dir, args.save_img_1st_step_dir)
     args.save_first_train = os.path.join(args.save_dir, args.save_first_train)
     args.le_path = os.path.join(args.fc1_dir, args.le_path)

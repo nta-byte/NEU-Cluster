@@ -48,14 +48,14 @@ class Relabel:
 
     def process_relabel(self):
         for i, k in enumerate(self.k_values):
-            print(
-                "cluster: {} accuracy: {} fow:{} AMI:{} NMI:{} AR:{}".format(
-                    k, self.acc_k[i],
-                    self.dict_fow_avg[k],
-                    self.dict_adjusted_mutual_info[k],
-                    self.dict_normalized_mutual_info[k],
-                    self.dict_adjusted_rand[k],
-                ))
+            # print(
+            #     "cluster: {} accuracy: {} fow:{} AMI:{} NMI:{} AR:{}".format(
+            #         k, self.acc_k[i],
+            #         self.dict_fow_avg[k],
+            #         self.dict_adjusted_mutual_info[k],
+            #         self.dict_normalized_mutual_info[k],
+            #         self.dict_adjusted_rand[k],
+            #     ))
             labels_unmatched_ = self.dict_cluster_labels[k]
             kmeans = self.kmeans_total[i]
             y_pred_ = ct.label_matcher(labels_unmatched_, self.y_gt)
@@ -67,12 +67,16 @@ class Relabel:
             new_le = ct.CustomLabelEncoder()
             new_le.update_mapper(cluster_mapper)
             y_pred_2_label = new_le.inverse_transform(labels_unmatched_)
-            print(len(y_pred_2_label), y_pred_2_label)
+            # print(len(y_pred_2_label), y_pred_2_label)
             out_dict_train = []
-            for i, l in enumerate(self.files):
-                out_dict_train.append({'file_path': self.files[i], 'label': y_pred_2_label[i]})
+            # for i, l in enumerate(self.files):
+            #     out_dict_train.append({'file_path': self.files[i], 'label': y_pred_2_label[i]})
 
-            write_csv(os.path.join(self.args.relabel_dir, str(k) + '_train.txt'), out_dict_train)
+            # write_csv(os.path.join(self.args.relabel_dir, str(k) + '_train.pkl'), out_dict_train)
+            with open(os.path.join(self.args.relabel_dir, str(k) + '_train.pkl'), 'wb') as f:
+                pickle.dump(y_pred_2_label, f)
+            with open(os.path.join(self.args.relabel_dir, str(k) + '_new_le.pkl'), 'wb') as f:
+                pickle.dump(new_le, f)
 
     def save_output(self):
         pass

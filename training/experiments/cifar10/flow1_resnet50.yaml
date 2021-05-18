@@ -24,21 +24,21 @@ TRAIN:
   IMAGE_SIZE:
     - 32
     - 32
-  BATCH_SIZE: 128
+  BATCH_SIZE: 256
   SHUFFLE: true
   BEGIN_EPOCH: 0
-  END_EPOCH: 1000
+  END_EPOCH: 100
   RESUME: true
-  OPTIMIZER: adam # adam or sgd
-  LR: 0.001
-  DROPOUT: 0.2
+  OPTIMIZER: sgd # adam or sgd
+  LR: 0.01
+  DROPOUT: 0.1
   PRINT_FREQ: 100
   RANDOM_CROP: true
   RESIZE: false
-  VALIDATION_EPOCH: 10
+  VALIDATION_EPOCH: 1
 
 TEST:
   IMAGE_SIZE:
-    - 224
-    - 224
-  BATCH_SIZE: 128
+    - 32
+    - 32
+  BATCH_SIZE: 256

@@ -1,0 +1,36 @@
+model_params:
+  name: 'SWAE'
+  n_genes: 512
+  latent_dim: 10
+
+exp_params:
+  dataset: cifar10
+  train_data_path: "/home/ntanh/ntanh/SDC_SALa_Clustering/CODE/NEU-Cluster/output_save_flow2/cifar10_RESNET18_pretrain_reduce_dim_UMAP_kmeanNinit50_pytorch_histeq_whitten/raw_features_train/RESNET18_pretrain_fc1_features_std_pytorch_histeq.pickle"
+  val_data_path: "/home/ntanh/ntanh/SDC_SALa_Clustering/CODE/NEU-Cluster/output_save_flow2/cifar10_RESNET18_pretrain_reduce_dim_UMAP_kmeanNinit50_pytorch_histeq_whitten/raw_features_train/RESNET18_pretrain_fc1_features_std_pytorch_histeq.pickle"
+
+trainer_params:
+  resume: False
+  optimizer: adam # adam or sgd
+  gpus: '0'
+  max_epochs: 500
+  validate_epoch: 5
+  batch_size: 2500
+  LR: 0.0005
+  weight_decay: 0.0005
+  scheduler_gamma: 0.95
+  momentum: 0.9
+
+#val_params:
+
+
+logging_params:
+  save_dir: "vae_ouput/cifar10/"
+  name: "SWAE"
+  manual_seed: 1265
+
+infer:
+  weight_path: "/home/ntanh/ntanh/SDC_SALa_Clustering/CODE/NEU-Cluster/output_save_flow1/cifar10_RESNET18_pretrain_reduce_dim_VAE_kmeanNinit50_pytorch_histeq_whitten/vae_ouput/cifar10/SWAE-best.pth"
+
+
+
+

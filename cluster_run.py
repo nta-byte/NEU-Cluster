@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle
+import torch
+import yaml
 import os
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
@@ -13,6 +15,11 @@ from libs.helper import classification_tools as ct
 from libs.helper.visualize import visual
 from libs.utils.yaml_config import init
 from create_pretext_pytorch import extract_feature
+# from libs.clustering.VAE.data_loader import VAEDataset
+# from libs.clustering.VAE.models.models import VAE
+# from libs.pretext.utils import load_state
+from libs.clustering.VAE.train import fit
+from libs.clustering.VAE.cluster import vae_reduce_dimension
 
 
 def get_optimal(logging, k_values, y, direction="decreasing", curve="convex", metric=''):
@@ -50,7 +57,7 @@ def sub_visual(dict_in, title='', save_name=''):
     plt.savefig(save_name)
 
 
-def decrease_dim(args, fc1):
+def decrease_dim(args, fc1, data=None):
     print(f'decrease_dim by {args.reduce_dimension}')
     if args.reduce_dimension == 'umap':
 
@@ -64,8 +71,6 @@ def decrease_dim(args, fc1):
         ).fit_transform(fc1,
                         # y=y_gt
                         )
-
-        # print(embedding.shape)
     elif args.reduce_dimension == 'pca':
         pca = PCA(n_components=args.pca_component, svd_solver='full', whiten=True)
         pca_nw = PCA(n_components=args.pca_component, svd_solver='full', whiten=False)
@@ -73,6 +78,21 @@ def decrease_dim(args, fc1):
         x_nw = pca_nw.fit_transform(fc1)
         if not args.pca_whitten:
             x = x_nw
+    elif args.reduce_dimension == 'vae':
+        with open(args.vae_cfg, 'r') as file:
+            try:
+                vaeconfig = yaml.safe_load(file)
+            except yaml.YAMLError as exc:
+                print(exc)
+
+        # print(vaeconfig)
+        vaeconfig['exp_params']['train_data_path'] = args.fc1_path_vae
+        vaeconfig['logging_params']['save_dir'] = os.path.join(args.save_dir, vaeconfig['logging_params']['save_dir'])
+        # print(vaeconfig)
+
+        vaeconfig['infer']['weight_path'] = fit(vaeconfig)
+        x = vae_reduce_dimension(vaeconfig, data)
+
     return x
 
 
@@ -84,11 +104,12 @@ def clustering(args, logging, data):
     dict_adjusted_mutual_info = {}
     dict_normalized_mutual_info = {}
     dict_adjusted_rand = {}
+    dict_silhouette = {}
     dict_cluster_labels = {}
     if not args.use_cache or not os.path.isfile(args.kmeans_k_cache_path):
         y_gt = le.transform(labels)  # integer labels for each image
-        x = decrease_dim(args, fc1)
-
+        x = decrease_dim(args, fc1, data)
+        print("done decrease dimension", x.shape)
         k_values = np.arange(3, 17)
         acc_k = np.zeros(k_values.shape)
         rs = np.random.RandomState(seed=987654321)
@@ -107,29 +128,35 @@ def clustering(args, logging, data):
             fow_avg = round(float(fow_avg), 3)
             dict_fow_avg[k] = fow_avg
 
-            adjusted_mutual_info = adjusted_mutual_info_score(y_gt, cluster_labels)
+            adjusted_mutual_info = adjusted_mutual_info_score(cluster_labels, y_gt)
             adjusted_mutual_info = round(float(adjusted_mutual_info), 3)
             dict_adjusted_mutual_info[k] = adjusted_mutual_info
 
-            normalized_mutual_info = normalized_mutual_info_score(y_gt, cluster_labels)
+            normalized_mutual_info = normalized_mutual_info_score(cluster_labels, y_gt)
             normalized_mutual_info = round(float(normalized_mutual_info), 3)
             dict_normalized_mutual_info[k] = normalized_mutual_info
 
-            adjusted_rand = adjusted_rand_score(y_gt, cluster_labels)
+            adjusted_rand = adjusted_rand_score(cluster_labels, y_gt)
             adjusted_rand = round(float(adjusted_rand), 3)
             dict_adjusted_rand[k] = adjusted_rand
+
+            silhouette = silhouette_score(x, cluster_labels)
+            silhouette = round(float(silhouette), 3)
+            dict_silhouette[k] = silhouette
 
             sav_figure_name = "{}_{}_.jpg".format(k, acc_k[i])
             sav_figure_name = os.path.join(args.save_img_1st_step_dir, sav_figure_name)
             visual(y_pred_, kmeans, le, x, sav_figure_name, k)
+
             print(
-                "cluster: {} accuracy: {} fow:{} AMI:{} NMI:{} AR:{}".format(
+                "cluster: {} accuracy: {} fow:{} AMI:{} NMI:{} AR:{}, Silhouette:{}".format(
                     k,
                     acc_k[i],
                     dict_fow_avg[k],
                     dict_adjusted_mutual_info[k],
                     dict_normalized_mutual_info[k],
                     dict_adjusted_rand[k],
+                    dict_silhouette[k],
                 ))
         optimal_cluster_list = []
         optimal_cluster_list.append(print_optimal(logging, dict_fow_avg, metric='fowlkes_mallows_score', args=args))
@@ -138,6 +165,7 @@ def clustering(args, logging, data):
         optimal_cluster_list.append(
             print_optimal(logging, dict_normalized_mutual_info, metric='normalized_mutual_info_score', args=args))
         optimal_cluster_list.append(print_optimal(logging, dict_adjusted_rand, metric='adjusted_rand_score', args=args))
+        optimal_cluster_list.append(print_optimal(logging, dict_silhouette, metric='silhouette_score', args=args))
 
         with open(args.kmeans_k_cache_path, 'wb') as f:
             pickle.dump({
@@ -149,6 +177,7 @@ def clustering(args, logging, data):
                 'dict_adjusted_mutual_info': dict_adjusted_mutual_info,
                 'dict_normalized_mutual_info': dict_normalized_mutual_info,
                 'dict_fow_avg': dict_fow_avg,
+                'dict_silhouette': dict_silhouette,
                 'optimal_cluster_list': optimal_cluster_list
             }, f)
     else:
@@ -160,16 +189,18 @@ def clustering(args, logging, data):
             dict_adjusted_mutual_info = results_['dict_adjusted_mutual_info']
             dict_normalized_mutual_info = results_['dict_normalized_mutual_info']
             dict_fow_avg = results_['dict_fow_avg']
+            dict_silhouette = results_['dict_silhouette']
             optimal_cluster_list = results_['optimal_cluster_list']
 
     for i, k in enumerate(k_values):
         logging.info(
-            "cluster: {} accuracy: {} fow:{} AMI:{} NMI:{} AR:{}".format(
+            "cluster: {} accuracy: {} fow:{} AMI:{} NMI:{} AR:{} Silhouette:{}".format(
                 k, acc_k[i],
                 dict_fow_avg[k],
                 dict_adjusted_mutual_info[k],
                 dict_normalized_mutual_info[k],
                 dict_adjusted_rand[k],
+                dict_silhouette[k]
             ))
 
     logging.info(f"optimal number of clusters {optimal_cluster_list}")

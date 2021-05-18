@@ -5,12 +5,12 @@ WORKERS: 10
 
 
 DATASET:
-  DATASET: 'cifar10'
+  DATASET: 'neu-cls'
   ROOT: ''
   TEST_DIR: ''
   VAL_DIR: ''
-  TRAIN_DIR: ''
-  NUM_CLASSES: 10
+  TRAIN_DIR: '/data20.04/home/ntanh/SDC_SALa_Clustering/CODE/NEU-Cluster/data/neu-cls/images_preprocessed/images_histeq_resize'
+  NUM_CLASSES: 6
   LE_PATH: ''
 MODEL:
   NAME: resnet50
@@ -22,23 +22,23 @@ MODEL:
 TRAIN:
   FINETUNE: ''
   IMAGE_SIZE:
-    - 32
-    - 32
+    - 200
+    - 200
   BATCH_SIZE: 128
   SHUFFLE: true
   BEGIN_EPOCH: 0
-  END_EPOCH: 1000
+  END_EPOCH: 50
   RESUME: true
-  OPTIMIZER: adam # adam or sgd
-  LR: 0.001
+  OPTIMIZER: sgd # adam or sgd
+  LR: 0.01
   DROPOUT: 0.2
   PRINT_FREQ: 100
   RANDOM_CROP: true
   RESIZE: false
-  VALIDATION_EPOCH: 10
+  VALIDATION_EPOCH: 2
 
 TEST:
   IMAGE_SIZE:
-    - 224
-    - 224
-  BATCH_SIZE: 128
+    - 200
+    - 200
+  BATCH_SIZE: 64

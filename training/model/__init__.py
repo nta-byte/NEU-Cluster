@@ -36,3 +36,7 @@ def get_model(config):
         model_dict.update(pretrained_dict)
         model.load_state_dict(model_dict)
     return model
+
+
+# if __name__ == '__main__':
+

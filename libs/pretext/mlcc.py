@@ -49,6 +49,7 @@ class DataPreprocess:
         self.le.mapper = {'1': 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5, '7': 6, '8': 7, '9': 8, 'etc': 9}
         self.class_to_idx = self.le.mapper
         self.files, self.labels = get_data_list(self.args, shuffle=False)
+        print(len(self.files))
         if self.args.cluster_dataset == 'train_test':
             pass
         elif self.args.cluster_dataset == 'train':
@@ -57,19 +58,7 @@ class DataPreprocess:
         elif self.args.cluster_dataset == 'test':
             self.files = self.files[950:]
             self.labels = self.labels[950:]
-        # files = sorted(files)  # returns a list of all of the images in the directory, sorted by filename.
-        # print(files)
-        # print('first 10 files: {}'.format(self.files[:10]))
-        # print('first 10 labels: {}'.format(self.labels[:10]))
 
-
-
-        # labels_int = self.le.transform(self.labels[:10])
-        # labels_str = self.le.inverse_transform(labels_int)
-        #
-        # print('label encodings: {}'.format(self.le.mapper))
-        # print('first 10 integer labels: {}'.format(labels_int))
-        # print('first 10 string labels: {}'.format(labels_str))
         transform_pipeline = transforms.Compose([
             # transforms.Resize(min_img_size, interpolation=Image.NEAREST),
             transforms.ToTensor(),

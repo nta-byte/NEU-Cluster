@@ -17,12 +17,12 @@ from create_pretext_pytorch import extract_feature
 from cluster_run import clustering
 from libs.relabeling import get_relabeling
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 
 def main():
 
-    args, logging = init("experiments/mlcc/flow1_resnet18.yaml")
+    args, logging = init("experiments/cifar10/flow1_resnet50_vae.yaml")
     update_config(config, args)
 
     """- step 1 : We'll train our system with original train set."""
@@ -30,7 +30,7 @@ def main():
     args.pretrained_path = train_function(args, config, step=1)
 
     """- step 2: after that, We extract feature from test set and cluster them by optimal number cluster algorithm."""
-    # args.cluster_dataset = 'test'
+    args.cluster_dataset = 'test'
     extract_feature(args, logging)
     with open(args.fc1_path, 'rb') as f:
         data = pickle.load(f)

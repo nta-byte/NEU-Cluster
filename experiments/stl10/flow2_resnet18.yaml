@@ -28,7 +28,7 @@ k_max: 17
 
 # train options
 batch_size: 256
-image_size: 224
+image_size: 96
 cfg: "training/experiments/stl10/flow2_resnet18.yaml"
 # general
 seed: 42

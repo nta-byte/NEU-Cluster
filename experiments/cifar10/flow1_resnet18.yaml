@@ -13,13 +13,13 @@ relabel_dir: "relabel"
 training_ouput_dir: "output_training"
 
 # cluster dataset
-cluster_dataset: "train" # train, test and train_test
+cluster_dataset: "test" # train, test and train_test
 
 # cluster
 kmeans_k_cache_path: "kmeans_acc_vs_k.pickle"
 use_cache: False
 use_histeq: True
-kmeans_n_init: 500
+kmeans_n_init: 50
 pca_component: 50
 reduce_dimension: "umap" # umap or pca
 pca_whitten: True

@@ -170,4 +170,21 @@ class DataPreprocess:
         with open(Path(self.args.fc1_path), 'wb') as f:
             pickle.dump(results, f)
 
-        print(self.output.shape)
+        # print(self.output.shape)
+
+    def save_pretext_for_vae(self):
+        results = {
+            # 'filename': self.files,
+            'features': self.output,
+            'labels': self.labels,
+            'le': self.le,
+            'layer_name': 'fc1'
+        }
+
+        feature_dir = Path(self.args.fc1_dir).parent
+
+        os.makedirs(feature_dir, exist_ok=True)
+        with open(Path(self.args.fc1_path_vae), 'wb') as f:
+            pickle.dump(results, f)
+
+        # print(self.output.shape)
