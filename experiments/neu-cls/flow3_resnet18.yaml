@@ -17,7 +17,7 @@ cluster_dataset: "train_test" # train, test and train_test
 
 # cluster
 kmeans_k_cache_path: "kmeans_acc_vs_k.pickle"
-use_cache: False
+use_cache: True
 use_histeq: True
 kmeans_n_init: 50
 pca_component: 50
