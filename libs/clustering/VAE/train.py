@@ -101,7 +101,8 @@ def fit(config):
 
     os.environ["CUDA_VISIBLE_DEVICES"] = config['trainer_params']['gpus']
     device = t.device('cuda:{}'.format(0))
-    model = SWAE(n_genes, latent_dim=config['model_params']['latent_dim']).to(device)
+    model = SWAE(n_genes, latent_dim=config['model_params']['latent_dim'],
+                 hidden_dims=config['model_params']['hidden_dims']).to(device)
     scheduler = None
     # optimizer = optim.Adam(model.parameters())
     optimizer, scheduler = get_optimizer(config, model)

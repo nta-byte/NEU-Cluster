@@ -5,7 +5,7 @@ import os.path as osp
 import yaml
 import argparse
 from libs.clustering.VAE.data_loader import VAEDataset
-from libs.clustering.VAE.models.models import VAE
+from libs.clustering.VAE.models.models import VAE, SWAE
 from libs.pretext.utils import load_state
 
 
@@ -21,7 +21,10 @@ def vae_reduce_dimension(config, data=None, dev=None):
     vaeloader = torch.utils.data.DataLoader(dataset,
                                             batch_size=config['trainer_params']['batch_size'],
                                             shuffle=False)
-    vae_model = VAE(n_genes, latent_dim=config['model_params']['latent_dim']).to(dev)
+    # vae_model = SWAE(n_genes, latent_dim=config['model_params']['latent_dim']).to(dev)
+
+    vae_model = SWAE(n_genes, latent_dim=config['model_params']['latent_dim'],
+                     hidden_dims=config['model_params']['hidden_dims']).to(dev)
     vae_model = load_state(config['infer']['weight_path'], vae_model)
     vae_model.eval()
     output = []
@@ -30,8 +33,8 @@ def vae_reduce_dimension(config, data=None, dev=None):
             if idx >= len(vaeloader):
                 break
             data = batch[0].to(dev)
-            mu, lvar = vae_model.encode(data.view(-1, n_genes))
-            z = vae_model.reparam(mu, lvar)
+            z = vae_model.encode(data.view(-1, n_genes))
+            # z = vae_model.reparam(mu, lvar)
             out = z.cpu().detach().numpy()
             output.append(out)
     output = np.concatenate(output, axis=0)
@@ -40,21 +43,20 @@ def vae_reduce_dimension(config, data=None, dev=None):
     x = output
     return x
 
-
 # if __name__ == '__main__':
-    # parser = argparse.ArgumentParser(description='Generic runner for VAE models')
-    # parser.add_argument('--config', '-c',
-    #                     dest="filename",
-    #                     metavar='FILE',
-    #                     help='path to the config file',
-    #                     default='experiments/simplevae.yaml')
-    #
-    # args = parser.parse_args()
-    # with open(args.filename, 'r') as file:
-    #     try:
-    #         config = yaml.safe_load(file)
-    #     except yaml.YAMLError as exc:
-    #         print(exc)
-    #
-    # print(config)
-    # x = reduce_dimension(config)
+# parser = argparse.ArgumentParser(description='Generic runner for VAE models')
+# parser.add_argument('--config', '-c',
+#                     dest="filename",
+#                     metavar='FILE',
+#                     help='path to the config file',
+#                     default='experiments/simplevae.yaml')
+#
+# args = parser.parse_args()
+# with open(args.filename, 'r') as file:
+#     try:
+#         config = yaml.safe_load(file)
+#     except yaml.YAMLError as exc:
+#         print(exc)
+#
+# print(config)
+# x = reduce_dimension(config)

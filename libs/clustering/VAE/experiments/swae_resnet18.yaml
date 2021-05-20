@@ -1,7 +1,8 @@
 model_params:
   name: 'SWAE'
-  n_genes: 2048
-  latent_dim: 10
+  n_genes: 512
+  latent_dim: 128
+  hidden_dims: [256]
 
 exp_params:
   dataset: cifar10
@@ -15,7 +16,7 @@ trainer_params:
   max_epochs: 500
   validate_epoch: 5
   batch_size: 2500
-  LR: 0.05
+  LR: 0.001
   weight_decay: 0.0005
   scheduler_gamma: 0.95
   momentum: 0.9
@@ -29,7 +30,7 @@ logging_params:
   manual_seed: 1265
 
 infer:
-  weight_path: "/home/ntanh/ntanh/SDC_SALa_Clustering/CODE/NEU-Cluster/output_save_flow1/cifar10_RESNET50_pretrain_reduce_dim_VAE_kmeanNinit50_pytorch_histeq_whitten/vae_ouput/cifar10/SWAE-best.pth"
+  weight_path: "/home/ntanh/ntanh/SDC_SALa_Clustering/CODE/NEU-Cluster/output_save_flow2/cifar10_RESNET18_pretrain_reduce_dim_VAE_latent_dim_3_kmeanNinit50_pytorch_histeq_whitten/vae_ouput/cifar10/SWAE-best.pth"
 
 
 

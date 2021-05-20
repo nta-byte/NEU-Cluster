@@ -128,7 +128,7 @@ class SWAE(nn.Module):
         self.in_channels = in_channels
         # in_channels = n_genes
         modules = []
-        self.hidden_dims = hidden_dims if hidden_dims else [512,256,128]
+        self.hidden_dims = hidden_dims if hidden_dims else [1024, 512,256,128]
         # else:
 
         # Build Encoder
@@ -143,11 +143,9 @@ class SWAE(nn.Module):
             in_channels = h_dim
 
         self.encoder = nn.Sequential(*modules)
-        # self.layersize = [512,256,128,64, 32]
         self.latent_dim = latent_dim
 
         self.fc2zmu = nn.Linear(self.hidden_dims[-1], self.latent_dim)
-        # self.fc2zlvar = nn.Linear(self.hidden_dims[-1], self.latentsize)
 
         # Build Decoder
         modules = []
@@ -184,10 +182,6 @@ class SWAE(nn.Module):
         # z_lvar = self.fc2zlvar(h2)
         return z_mu
 
-    # def reparam(self, mu, lvar):
-    #     std = t.exp(0.5 * lvar)
-    #     eps = t.randn_like(std)
-    #     return mu + eps * std
     def get_random_projections(self, latent_dim: int, num_samples: int) -> t.Tensor:
         """
         Returns random samples from latent distribution's (Gaussian)

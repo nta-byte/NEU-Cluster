@@ -1,7 +1,8 @@
 model_params:
   name: 'SWAE'
   n_genes: 2048
-  latent_dim: 10
+  latent_dim: 128
+  hidden_dims: [1024, 512,256,128]
 
 exp_params:
   dataset: cifar10
@@ -15,7 +16,7 @@ trainer_params:
   max_epochs: 500
   validate_epoch: 5
   batch_size: 2500
-  LR: 0.05
+  LR: 0.001
   weight_decay: 0.0005
   scheduler_gamma: 0.95
   momentum: 0.9
