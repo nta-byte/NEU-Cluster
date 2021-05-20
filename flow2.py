@@ -25,14 +25,14 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 
 def main():
-    args, logging = init("experiments/cifar10/flow2_resnet18.yaml")
+    args, logging = init("experiments/cifar10/flow2_resnet18_vae.yaml")
     update_config(config, args)
     """
     + step 1: make new labels for the datatset by merging 2 classes into 1 randomly -> we got k classes.
     + step 2: train classifier with k classes."""
     # train
     args.cluster_dataset = 'train'
-    args.pretrained_path = train_function2(args, config)
+    # args.pretrained_path = train_function2(args, config)
 
     """- step 3: extract feature and cluster the datatset by optimal number cluster algorithm."""
     args.cluster_dataset = 'test'
@@ -60,6 +60,7 @@ def main():
         config.DATASET.VAL_LIST = os.path.join(args.relabel_dir, str(clusters) + '_test.pkl')
         config.MODEL.PRETRAINED = False
         config.TRAIN.FINETUNE = ''
+        config.TRAIN.OPTIMIZER = 'sgd'
         # config.TRAIN.BEGIN_EPOCH = 0
         # config.TRAIN.END_EPOCH = 20
         train_function(args, config, step=3)

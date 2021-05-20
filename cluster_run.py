@@ -92,7 +92,8 @@ def decrease_dim(args, fc1, data=None):
 
         vaeconfig['infer']['weight_path'] = fit(vaeconfig)
         x = vae_reduce_dimension(vaeconfig, data)
-
+    elif args.reduce_dimension == 'none':
+        x = fc1
     return x
 
 
@@ -165,7 +166,7 @@ def clustering(args, logging, data):
         optimal_cluster_list.append(
             print_optimal(logging, dict_normalized_mutual_info, metric='normalized_mutual_info_score', args=args))
         optimal_cluster_list.append(print_optimal(logging, dict_adjusted_rand, metric='adjusted_rand_score', args=args))
-        optimal_cluster_list.append(print_optimal(logging, dict_silhouette, metric='silhouette_score', args=args))
+        # optimal_cluster_list.append(print_optimal(logging, dict_silhouette, metric='silhouette_score', args=args))
 
         with open(args.kmeans_k_cache_path, 'wb') as f:
             pickle.dump({

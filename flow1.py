@@ -22,12 +22,12 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def main():
 
-    args, logging = init("experiments/cifar10/flow1_resnet50_vae.yaml")
+    args, logging = init("experiments/cifar10/flow1_resnet18_vae.yaml")
     update_config(config, args)
 
     """- step 1 : We'll train our system with original train set."""
     args.cluster_dataset = 'train_test'
-    args.pretrained_path = train_function(args, config, step=1)
+    # args.pretrained_path = train_function(args, config, step=1)
 
     """- step 2: after that, We extract feature from test set and cluster them by optimal number cluster algorithm."""
     args.cluster_dataset = 'test'
