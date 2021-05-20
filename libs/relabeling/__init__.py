@@ -10,6 +10,6 @@ def get_relabeling(args):
     elif args.dataset == 'cifar10':
         return cifar10
     elif args.dataset == 'stl10':
-        return cifar10
+        return stl10
     elif args.dataset == 'mlcc':
         return mlcc
