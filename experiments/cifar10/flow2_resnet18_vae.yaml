@@ -9,11 +9,13 @@ dataset_root: "/mnt/data1/ntanh/data"
 data_preprocess_path: ""
 le_path: "label_encoder.pickle" # label encoder model which converts string labels to integers.
 fc1_dir: "raw_features"
+fc1_path_vae: "raw_features"
 relabel_dir: "relabel"
 training_ouput_dir: "output_training"
 
 # cluster dataset
 cluster_dataset: "test" # train, test and train_test
+label_transform_path: "label_transformation.pickle"
 
 # cluster
 kmeans_k_cache_path: "kmeans_acc_vs_k.pickle"
@@ -21,14 +23,15 @@ use_cache: False
 use_histeq: True
 kmeans_n_init: 50
 pca_component: 50
-reduce_dimension: "vae" # umap or pca or vae
+reduce_dimension: "vae" # umap or pca or none or vae
+vae_cfg: "libs/clustering/VAE/experiments/swae_resnet18.yaml"
 pca_whitten: True
 k_min: 3
 k_max: 17
 
 # train options
 batch_size: 256
-image_size: 32
+image_size: 224
 cfg: "training/experiments/cifar10/flow2_resnet18.yaml"
 # general
 seed: 42
@@ -38,5 +41,5 @@ workers: 30
 framework: "pytorch" # pytorch or tf
 model: "RESNET18" # "VGG16" "RESNET50"
 model_path: ""
-pretrained_path: "output_save_flow2/cifar10_RESNET18_pretrain_reduce_dim_UMAP_kmeanNinit50_pytorch_histeq_whitten/relabel/output_training/train_5_cluster/resnet18-Epoch-2-Loss-0.554-Acc-0.81.pth"
+pretrained_path: "output_save_flow2/cifar10_RESNET18_pretrain_reduce_dim_VAE_latent_dim_3_kmeanNinit50_pytorch_histeq_whitten/relabel/output_training/train_5_cluster/resnet18-Epoch-4-Loss-0.174-Acc-0.95.pth"
 reload: False

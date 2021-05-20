@@ -21,14 +21,14 @@ use_cache: False
 use_histeq: True
 kmeans_n_init: 50
 pca_component: 50
-reduce_dimension: "umap" # umap or pca or vae
+reduce_dimension: "vae" # umap or pca or vae or none
 pca_whitten: True
 k_min: 3
 k_max: 17
 
 # train options
 batch_size: 256
-image_size: 32
+image_size: 224
 cfg: "training/experiments/cifar10/flow2_resnet18.yaml"
 # general
 seed: 42
@@ -38,5 +38,5 @@ workers: 30
 framework: "pytorch" # pytorch or tf
 model: "RESNET18" # "VGG16" "RESNET50"
 model_path: ""
-pretrained_path: "output_save_flow2/cifar10_RESNET18_pretrain_reduce_dim_UMAP_kmeanNinit50_pytorch_histeq_whitten/relabel/output_training/train_5_cluster/resnet18-Epoch-2-Loss-0.554-Acc-0.81.pth"
+pretrained_path: "output_save_flow2/cifar10_RESNET18_pretrain_reduce_dim_UMAP_kmeanNinit50_pytorch_histeq_whitten/relabel/output_training/train_5_cluster/resnet18-Epoch-0-Loss-0.173-Acc-0.94.pth"
 reload: False

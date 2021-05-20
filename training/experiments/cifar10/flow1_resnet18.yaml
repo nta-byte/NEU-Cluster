@@ -22,15 +22,15 @@ MODEL:
 TRAIN:
   FINETUNE: ''
   IMAGE_SIZE:
-    - 32
-    - 32
+    - 224
+    - 224
   BATCH_SIZE: 256
   SHUFFLE: true
   BEGIN_EPOCH: 0
   END_EPOCH: 100
   RESUME: true
-  OPTIMIZER: sgd # adam or sgd
-  LR: 0.01
+  OPTIMIZER: adam # adam or sgd
+  LR: 0.0001
   DROPOUT: 0.1
   PRINT_FREQ: 100
   RANDOM_CROP: true
@@ -39,6 +39,6 @@ TRAIN:
 
 TEST:
   IMAGE_SIZE:
-    - 32
-    - 32
+    - 224
+    - 224
   BATCH_SIZE: 256

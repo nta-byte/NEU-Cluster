@@ -22,9 +22,9 @@ MODEL:
 TRAIN:
   FINETUNE: ''
   IMAGE_SIZE:
-    - 32
-    - 32
-  BATCH_SIZE: 128
+    - 224
+    - 224
+  BATCH_SIZE: 256
   SHUFFLE: true
   BEGIN_EPOCH: 0
   END_EPOCH: 100
@@ -39,6 +39,6 @@ TRAIN:
 
 TEST:
   IMAGE_SIZE:
-    - 32
-    - 32
-  BATCH_SIZE: 128
+    - 224
+    - 224
+  BATCH_SIZE: 256

@@ -21,8 +21,9 @@ from libs.pretext.utils import get_data_list, load_images
 
 
 class DataPreprocess:
-    def __init__(self, argus, class_merging=False):
+    def __init__(self, argus, class_merging=False, renew_merge=False):
         self.args = argus
+        self.renew_merge = renew_merge
         print(f"dataset: {self.args.dataset}")
         normalize = transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
         self.transform = transforms.Compose([
@@ -38,6 +39,16 @@ class DataPreprocess:
                                                download=True, transform=self.transform,
                                                )
         if class_merging:
+            if self.renew_merge:
+                self.label_transform = None
+            else:
+                if os.path.isfile(self.args.label_transform_path):
+                    print(f'reload self.label_transform in {self.args.label_transform_path}')
+                    with open(self.args.label_transform_path, 'rb') as f:
+                        self.label_transform = pickle.load(f)
+                else:
+                    self.label_transform = None
+
             trainset, testset = self.random_class_merging(trainset, testset)
         print('class_to_idx', trainset.class_to_idx)
         # print(trainset.classes)
@@ -62,51 +73,50 @@ class DataPreprocess:
         self.classes = trainset.classes
 
     def random_class_merging(self, trainset=None, testset=None):
-        # print(trainset.class_to_idx)
-        # print(trainset.targets)
         class_to_idx = trainset.class_to_idx
         le = CustomLabelEncoder()
         le.mapper = trainset.class_to_idx
         trainlabels = le.inverse_transform(trainset.targets)
         testlabels = le.inverse_transform(testset.targets)
-        # print(trainlabels)
-        classes = list(class_to_idx.keys())
-        random.shuffle(classes)
-        mergepoint = int(len(classes) / 2)
-        # print(mergepoint)
-        new_classes1 = classes[:mergepoint]
-        new_classes2 = classes[mergepoint:]
-        new_classes = [x1 + "_" + x2 for (x1, x2) in zip(new_classes1, new_classes2)]
-        new_classes_list = [[x1, x2] for (x1, x2) in zip(new_classes1, new_classes2)]
-        # print('new_classes_list', new_classes_list)
-        # print(new_classes2)
-        # print('new_classes', new_classes)
+        print("start to merge classes")
+        if self.label_transform is None:
+            print("create label_transform")
+            self.label_transform = {'converted': {}, 'new_classes': None, 'new_class_to_idx': {},
+                                    'new_le': CustomLabelEncoder()}
+            classes = list(class_to_idx.keys())
+            random.shuffle(classes)
+            mergepoint = int(len(classes) / 2)
+            new_classes1 = classes[:mergepoint]
+            new_classes2 = classes[mergepoint:]
+            self.label_transform['new_classes'] = [x1 + "_" + x2 for (x1, x2) in zip(new_classes1, new_classes2)]
+            new_classes_list = [[x1, x2] for (x1, x2) in zip(new_classes1, new_classes2)]
+            # print(new_classes_list)
+            for group_classes in new_classes_list:
+                self.label_transform['converted'][group_classes[0]] = "_".join(group_classes)
+                self.label_transform['converted'][group_classes[1]] = "_".join(group_classes)
+            for i, x in enumerate(self.label_transform['new_classes']):
+                self.label_transform['new_class_to_idx'][x] = i
 
+            self.label_transform['new_le'].mapper = self.label_transform['new_class_to_idx']
+            with open(Path(self.args.label_transform_path), 'wb') as f:
+                pickle.dump(self.label_transform, f)
+        # else:
         new_trainlabels = [''] * len(trainlabels)
         for iddd, x in enumerate(trainlabels):
-            for idxxxx, new_x in enumerate(new_classes_list):
-                if x in new_x:
-                    new_trainlabels[iddd] = new_classes[idxxxx]
-
+            new_trainlabels[iddd] = self.label_transform['converted'][x]
         new_testlabels = [''] * len(testlabels)
         for iddd, x in enumerate(testlabels):
-            for idxxxx, new_x in enumerate(new_classes_list):
-                if x in new_x:
-                    new_testlabels[iddd] = new_classes[idxxxx]
-        # print('set(trainlabels)', set(trainlabels))
-        # print('set(new_trainlabels)', set(new_trainlabels))
-        new_class_to_idx = {}
-        for i, x in enumerate(new_classes):
-            new_class_to_idx[x] = i
-        # print(new_class_to_idx)
-        new_le = CustomLabelEncoder()
-        new_le.mapper = new_class_to_idx
-        trainset.targets = new_le.transform(new_trainlabels)
-        trainset.class_to_idx = new_class_to_idx
-        trainset.classes = new_classes
-        testset.targets = new_le.transform(new_testlabels)
-        testset.class_to_idx = new_class_to_idx
-        testset.classes = new_classes
+            new_testlabels[iddd] = self.label_transform['converted'][x]
+
+        # new_le = CustomLabelEncoder()
+        trainset.targets = self.label_transform['new_le'].transform(new_trainlabels)
+        trainset.class_to_idx = self.label_transform['new_class_to_idx']
+        trainset.classes = self.label_transform['new_classes']
+        testset.targets = self.label_transform['new_le'].transform(new_testlabels)
+        testset.class_to_idx = self.label_transform['new_class_to_idx']
+        testset.classes = self.label_transform['new_classes']
+        # print("self.label_transform", self.label_transform)
+        # print("self.args.label_transform_path", self.args.label_transform_path)
         return trainset, testset
 
     def infer(self, net, dev):
