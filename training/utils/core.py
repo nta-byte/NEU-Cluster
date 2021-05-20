@@ -34,8 +34,8 @@ def train_step(loader, net, crit, optim, dev, total_step, logging, config, debug
             else:
                 logging.info('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}'
                              .format(epo, config.TRAIN.END_EPOCH, i + 1, total_step, loss.item()))
-    if scheduler:
-        scheduler.step()
+        if scheduler:
+            scheduler.step()
 
 
 class AverageMeter(object):

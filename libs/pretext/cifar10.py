@@ -21,7 +21,7 @@ from libs.pretext.utils import get_data_list, load_images
 
 
 class DataPreprocess:
-    def __init__(self, argus, class_merging=False, renew_merge=False):
+    def __init__(self, argus, class_merging=False, renew_merge=False, keep_org_label=True):
         self.args = argus
         self.renew_merge = renew_merge
         print(f"dataset: {self.args.dataset}")
@@ -38,6 +38,8 @@ class DataPreprocess:
         testset = torchvision.datasets.CIFAR10(root=self.args.dataset_root, train=False,
                                                download=True, transform=self.transform,
                                                )
+        self.le = CustomLabelEncoder()
+        self.le.mapper = trainset.class_to_idx
         if class_merging:
             if self.renew_merge:
                 self.label_transform = None
@@ -50,10 +52,12 @@ class DataPreprocess:
                     self.label_transform = None
 
             trainset, testset = self.random_class_merging(trainset, testset)
-        print('class_to_idx', trainset.class_to_idx)
+        if not keep_org_label:
+            print('relabel labels')
+            self.le.mapper = trainset.class_to_idx
+        print('class_to_idx', self.le.mapper)
         # print(trainset.classes)
-        self.le = CustomLabelEncoder()
-        self.le.mapper = trainset.class_to_idx
+
         # self.le.fit(self.labels)
         self.trainlabels = self.le.inverse_transform(trainset.targets)
         self.testlabel = self.le.inverse_transform(testset.targets)
