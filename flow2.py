@@ -25,7 +25,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 
 def main():
-    args, logging = init("experiments/cifar10/flow2_resnet18_vae.yaml")
+    args, logging = init("experiments/mlcc/flow2_resnet18_vae.yaml")
     update_config(config, args)
     """
     + step 1: make new labels for the datatset by merging 2 classes into 1 randomly -> we got k classes.
@@ -35,12 +35,12 @@ def main():
     # args.pretrained_path = train_function2(args, config)
 
     """- step 3: extract feature and cluster the datatset by optimal number cluster algorithm."""
-    args.cluster_dataset = 'test'
+    args.cluster_dataset = 'train_test'
     extract_feature(args, logging, class_merging=True)
     with open(args.fc1_path, 'rb') as f:
         data = pickle.load(f)
     logging.info('start clustering')
-    opt_clst = clustering(args, logging, data)
+    opt_clst = clustering(args, logging, data, org_eval=True)
     # logging.info(f'Optimal number of clusters: {opt_clst}')
     opt_clst = list(set(opt_clst))
     # relabel data

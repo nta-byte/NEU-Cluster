@@ -91,16 +91,17 @@ def decrease_dim(args, fc1, data=None):
         # print(vaeconfig)
 
         vaeconfig['infer']['weight_path'] = fit(vaeconfig)
+        print('1' ,vaeconfig['infer']['weight_path'])
         x = vae_reduce_dimension(vaeconfig, data)
     elif args.reduce_dimension == 'none':
         x = fc1
     return x
 
 
-def clustering(args, logging, data):
+def clustering(args, logging, data, org_eval=True):
     fc1 = data['features']  # array containing fc1 features for each file
-    labels = data['labels']  # string labels for each image
-    le = data['le']
+    labels = data['org_labels'] if org_eval else data['new_labels']  # string labels for each image
+    le = data['original_le'] if org_eval else data['new_le']
     dict_fow_avg = {}
     dict_adjusted_mutual_info = {}
     dict_normalized_mutual_info = {}

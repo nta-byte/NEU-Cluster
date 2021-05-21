@@ -27,7 +27,7 @@ def main():
 
     """- step 1 : We'll train our system with original train set."""
     args.cluster_dataset = 'train_test'
-    # args.pretrained_path = train_function(args, config, step=1)
+    args.pretrained_path = train_function(args, config, step=1)
 
     """- step 2: after that, We extract feature from test set and cluster them by optimal number cluster algorithm."""
     args.cluster_dataset = 'test'
@@ -35,7 +35,7 @@ def main():
     with open(args.fc1_path, 'rb') as f:
         data = pickle.load(f)
     print('start clustering')
-    opt_clst = clustering(args, logging, data)
+    opt_clst = clustering(args, logging, data, org_eval=True)
 
     # relabel data
     print('start relabeling data')

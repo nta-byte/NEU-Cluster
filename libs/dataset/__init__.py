@@ -118,14 +118,6 @@ class DataPreprocess:
                 transforms.ToTensor(),
                 normalize
             ])
-            # transform_training = transforms.Compose([transforms.ToPilImage(),
-            #                                          transforms.Random_change_brightness(),
-            #                                          transforms.RandomHorizontalFlip(),
-            #                                          transforms.RandomVerticalFlip(),
-            #                                          transforms.ToTensor(),
-            #                                          transforms.Normalize(mean=[0.485, 0.456, 0.406],
-            #                                                               std=[0.229, 0.224, 0.225])
-            #                                          ])
 
             transform_val = transforms.Compose([
                 transforms.Resize((config.TRAIN.IMAGE_SIZE[0], config.TRAIN.IMAGE_SIZE[1])),

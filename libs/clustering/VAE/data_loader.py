@@ -5,14 +5,15 @@ import os
 
 
 class VAEDataset(t.utils.data.Dataset):
-    def __init__(self, datain=None, path_datain=None):
+    def __init__(self, datain=None, path_datain=None, use_org_labels=True):
         if path_datain:
             if os.path.exists(path_datain):
                 with open(path_datain, 'rb') as f:
                     self.datain = pickle.load(f)
         else:
             self.datain = datain
-        self.labels = self.datain['le'].transform(self.datain['labels'])
+        self.labels = self.datain['original_le'].transform(self.datain['org_labels']) if use_org_labels else \
+        self.datain['new_le'].transform(self.datain['new_labels'])
 
         # print(self.datain)
 

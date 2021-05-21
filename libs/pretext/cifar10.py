@@ -21,7 +21,7 @@ from libs.pretext.utils import get_data_list, load_images
 
 
 class DataPreprocess:
-    def __init__(self, argus, class_merging=False, renew_merge=False, keep_org_label=True):
+    def __init__(self, argus, class_merging=False, renew_merge=False):
         self.args = argus
         self.renew_merge = renew_merge
         print(f"dataset: {self.args.dataset}")
@@ -38,8 +38,18 @@ class DataPreprocess:
         testset = torchvision.datasets.CIFAR10(root=self.args.dataset_root, train=False,
                                                download=True, transform=self.transform,
                                                )
-        self.le = CustomLabelEncoder()
-        self.le.mapper = trainset.class_to_idx
+        self.original_le = CustomLabelEncoder()
+        self.original_le.mapper = trainset.class_to_idx
+
+        self.org_trainlabels = self.original_le.inverse_transform(trainset.targets)
+        self.org_testlabel = self.original_le.inverse_transform(testset.targets)
+        if self.args.cluster_dataset == 'train':
+            self.org_labels = self.org_trainlabels
+        elif self.args.cluster_dataset == 'test':
+            self.org_labels = self.org_testlabel
+        else:
+            self.org_labels = np.concatenate((self.org_trainlabels, self.org_testlabel))
+
         if class_merging:
             if self.renew_merge:
                 self.label_transform = None
@@ -52,23 +62,25 @@ class DataPreprocess:
                     self.label_transform = None
 
             trainset, testset = self.random_class_merging(trainset, testset)
-        if not keep_org_label:
-            print('relabel labels')
-            self.le.mapper = trainset.class_to_idx
-        print('class_to_idx', self.le.mapper)
+
+        self.new_le = CustomLabelEncoder()
+        self.new_le.mapper = trainset.class_to_idx
+        # print('class_to_idx', self.original_le.mapper)
         # print(trainset.classes)
 
         # self.le.fit(self.labels)
-        self.trainlabels = self.le.inverse_transform(trainset.targets)
-        self.testlabel = self.le.inverse_transform(testset.targets)
+        self.new_trainlabels = self.new_le.inverse_transform(trainset.targets)
+        self.new_testlabel = self.new_le.inverse_transform(testset.targets)
         if self.args.cluster_dataset == 'train':
-            self.labels = self.trainlabels
+            self.new_labels = self.new_trainlabels
         elif self.args.cluster_dataset == 'test':
-            self.labels = self.testlabel
+            self.new_labels = self.new_testlabel
         else:
-            self.labels = np.concatenate((self.trainlabels, self.testlabel))
+            self.new_labels = np.concatenate((self.new_trainlabels, self.new_testlabel))
         # trainset.targets = onehot(trainset.targets)
         # testset.targets = onehot(testset.targets)
+        print('extract data set org label', set(self.org_labels))
+        print('extract data set new label', set(self.new_labels))
 
         self.train_loader = torch.utils.data.DataLoader(trainset, batch_size=self.args.batch_size,
                                                         shuffle=False, num_workers=self.args.workers)
@@ -114,6 +126,7 @@ class DataPreprocess:
 
         # new_le = CustomLabelEncoder()
         trainset.targets = self.label_transform['new_le'].transform(new_trainlabels)
+        print('check1', set(new_trainlabels))
         trainset.class_to_idx = self.label_transform['new_class_to_idx']
         trainset.classes = self.label_transform['new_classes']
         testset.targets = self.label_transform['new_le'].transform(new_testlabels)
@@ -173,8 +186,10 @@ class DataPreprocess:
         results = {
             # 'filename': self.files,
             'features': self.output,
-            'labels': self.labels,
-            'le': self.le,
+            'org_labels': self.org_labels,
+            'new_labels': self.new_labels,
+            'original_le': self.original_le,
+            'new_le': self.new_le,
             'layer_name': 'fc1'
         }
 
@@ -190,8 +205,10 @@ class DataPreprocess:
         results = {
             # 'filename': self.files,
             'features': self.output,
-            'labels': self.labels,
-            'le': self.le,
+            'org_labels': self.org_labels,
+            'new_labels': self.new_labels,
+            'original_le': self.original_le,
+            'new_le': self.new_le,
             'layer_name': 'fc1'
         }
 

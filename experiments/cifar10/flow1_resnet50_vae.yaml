@@ -15,6 +15,7 @@ training_ouput_dir: "output_training"
 
 # cluster dataset
 cluster_dataset: "test" # train, test and train_test
+label_transform_path: "label_transformation.pickle"
 
 # cluster
 kmeans_k_cache_path: "kmeans_acc_vs_k.pickle"

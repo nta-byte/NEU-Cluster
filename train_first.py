@@ -128,7 +128,7 @@ def train_function2(args, configuration):
     clusters = int(configuration.DATASET.NUM_CLASSES / 2)
 
     # Init save dir
-    save_dir_root = args.training_ouput_dir
+    save_dir_root = args.save_first_train
     save_dir = os.path.join(save_dir_root,
                             f'train_{clusters}_cluster')
     if not os.path.exists(save_dir):

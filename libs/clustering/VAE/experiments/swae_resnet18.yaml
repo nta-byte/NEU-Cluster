@@ -30,7 +30,7 @@ logging_params:
   manual_seed: 1265
 
 infer:
-  weight_path: "/home/ntanh/ntanh/SDC_SALa_Clustering/CODE/NEU-Cluster/output_save_flow2/cifar10_RESNET18_pretrain_reduce_dim_VAE_latent_dim_3_kmeanNinit50_pytorch_histeq_whitten/vae_ouput/cifar10/SWAE-best.pth"
+  weight_path: "/home/ntanh/ntanh/SDC_SALa_Clustering/CODE/NEU-Cluster/output_save_flow1/cifar10_RESNET18_pretrain_reduce_dim_VAE_latent_dim_32_kmeanNinit100_pytorch_histeq_whitten/vae_ouput/cifar10/SWAE-best.pth"
 
 
 

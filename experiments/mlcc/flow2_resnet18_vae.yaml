@@ -1,14 +1,15 @@
 # general
-dataset: "cifar10" # neu-cls or neu-cls-64
-save_dir: "output_save_flow3"
+dataset: "mlcc"
+save_dir: "output_save_flow2"
 save_img_1st_step_dir: "1st_step"
 save_first_train: "1st_train"
 
 # general
-dataset_root: "/mnt/data1/ntanh/data"
-data_preprocess_path: ""
+data_preprocess_path: "data/mlcc"
+dataset_root: "/mnt/data1/ntanh/data/mlcc"
 le_path: "label_encoder.pickle" # label encoder model which converts string labels to integers.
 fc1_dir: "raw_features"
+fc1_path_vae: "raw_features"
 relabel_dir: "relabel"
 training_ouput_dir: "output_training"
 
@@ -22,7 +23,8 @@ use_cache: False
 use_histeq: True
 kmeans_n_init: 50
 pca_component: 50
-reduce_dimension: "umap" # umap or pca
+reduce_dimension: "none" # umap or pca or none or vae
+vae_cfg: "libs/clustering/VAE/experiments/swae_resnet18.yaml"
 pca_whitten: True
 k_min: 3
 k_max: 17
@@ -30,14 +32,14 @@ k_max: 17
 # train options
 batch_size: 256
 image_size: 224
-cfg: "training/experiments/cifar10/flow3_resnet18.yaml"
+cfg: "training/experiments/mlcc/flow2_resnet18.yaml"
 # general
 seed: 42
-workers: 15
+workers: 30
 
 # model options
 framework: "pytorch" # pytorch or tf
-model: "RESNET18" # "VGG16" "RESNET50" RESNET18
+model: "RESNET18" # "VGG16" "RESNET50"
 model_path: ""
-pretrained_path: ""
+pretrained_path: "output_save_flow2/mlcc_RESNET18_pretrain_reduce_dim_VAE_latent_dim_32_kmeanNinit50_pytorch_histeq_whitten/1st_train/train_5_cluster/resnet18-best.pth"
 reload: False

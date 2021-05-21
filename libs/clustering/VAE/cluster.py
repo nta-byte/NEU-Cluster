@@ -13,6 +13,7 @@ def vae_reduce_dimension(config, data=None, dev=None):
     if dev is None:
         dev = torch.device('cuda:{}'.format(0))
 
+    print('2', config['infer']['weight_path'])
     n_genes = config['model_params']['n_genes']
     if data is not None:
         dataset = VAEDataset(datain=data)
