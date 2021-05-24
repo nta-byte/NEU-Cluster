@@ -50,7 +50,8 @@ class DataPreprocess:
         self.original_le.mapper = {'1': 0, '2': 1, '3': 2, '4': 3, '5': 4, '6': 5, '7': 6, '8': 7, '9': 8, 'etc': 9}
         # self.class_to_idx = self.le.mapper
         self.files, self.org_labels = get_data_list(self.args, shuffle=False)
-        print(len(self.files))
+        # print(len(self.files))
+        self.classes = list(self.original_le.mapper.keys())
         if self.args.cluster_dataset == 'train_test':
             pass
         elif self.args.cluster_dataset == 'train':
@@ -79,13 +80,14 @@ class DataPreprocess:
             dataset = MLCCDataset(imgList=self.files, dataList=self.new_labels, le=self.label_transform['new_le'],
                                   transform=transform_pipeline)
             self.classes = self.label_transform['new_classes']
+            print('extract data set new label', set(self.new_labels))
         else:
             dataset = MLCCDataset(imgList=self.files, dataList=self.org_labels, le=self.original_le,
                                   transform=transform_pipeline)
-            self.classes = self.label_transform['org_classes']
+            self.new_labels = self.org_labels
+            self.new_le = self.original_le
 
         print('extract data set org label', set(self.org_labels))
-        print('extract data set new label', set(self.new_labels))
 
         # self.le.mapper = self.class_to_idx
         train_len = int(len(dataset) * .8)
@@ -100,7 +102,6 @@ class DataPreprocess:
 
         self.loader = torch.utils.data.DataLoader(dataset, batch_size=self.args.batch_size,
                                                   shuffle=False, num_workers=self.args.workers)
-
 
     def random_class_merging(self, trainset=None):
         class_to_idx = self.original_le.mapper

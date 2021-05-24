@@ -29,9 +29,12 @@ class Relabel:
         self.args = args
         self.files = data['filename']  # file paths to each image
         self.fc1 = data['features']  # array containing fc1 features for each file
-        self.labels = data['labels']  # string labels for each image
+        # self.labels = data['labels']  # string labels for each image
+        self.labels = data['new_labels']  # string labels for each image
         # self.labels = data['labels']
-        self.le = data['le']
+        self.le = data['new_le']
+        # self.labels = data['labels']
+        # self.le = data['le']
         self.y_gt = self.le.transform(self.labels)  # integer labels for each image
 
     def load_state(self):

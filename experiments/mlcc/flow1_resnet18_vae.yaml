@@ -23,7 +23,7 @@ use_cache: False
 use_histeq: True
 kmeans_n_init: 50
 pca_component: 50
-reduce_dimension: "vae" # umap or pca or none or vae
+reduce_dimension: "umap" # umap or pca or none or vae
 vae_cfg: "libs/clustering/VAE/experiments/swae_resnet18.yaml"
 pca_whitten: True
 k_min: 3
@@ -41,5 +41,5 @@ workers: 15
 framework: "pytorch" # pytorch or tf
 model: "RESNET18" # "VGG16" "RESNET50" RESNET18
 model_path: ""
-pretrained_path: "output_save_flow1/mlcc_RESNET18_pretrain_reduce_dim_UMAP_kmeanNinit50_pytorch_histeq_whitten/1st_train/train_10_cluster/resnet18-best.pth"
+pretrained_path: "output_save_flow1/mlcc_RESNET18_pretrain_reduce_dim_VAE_latent_dim_128_kmeanNinit50_pytorch_histeq_whitten/1st_train/train_10_cluster/resnet18-best.pth"
 reload: False
