@@ -149,11 +149,11 @@ class SWAE(nn.Module):
 
         # Build Decoder
         modules = []
-
-        self.hidden_dims.reverse()
+        self.decode_hd_dims = self.hidden_dims.copy()
+        self.decode_hd_dims.reverse()
         in_channels = self.latent_dim
 
-        for h_dim in self.hidden_dims:
+        for h_dim in self.decode_hd_dims:
             modules.append(
                 nn.Sequential(
                     nn.Linear(in_channels, h_dim),
@@ -167,7 +167,7 @@ class SWAE(nn.Module):
             in_channels = h_dim
 
         self.decoder = nn.Sequential(*modules)
-        self.fc10 = nn.Linear(self.hidden_dims[-1], self.in_channels)
+        self.fc10 = nn.Linear(self.decode_hd_dims[-1], self.in_channels)
         self.softplus = nn.Softplus()
         self.sigmoid = nn.Sigmoid()
         self.fc = nn.Linear(self.latent_dim, num_classes)
