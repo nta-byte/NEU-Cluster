@@ -30,7 +30,7 @@ def main():
     args, logging = init("experiments/stl10/flow2_resnet50_vae.yaml")
     update_config(config, args)
     doneinit = time()
-    logging.info(f"<============> Init time: {round(doneinit - startinit, 2)}")
+    logging.info(f"<============> Init time: {round(doneinit - startinit, 2)} seconds")
     """
     + step 1: make new labels for the datatset by merging 2 classes into 1 randomly -> we got k classes.
     + step 2: train classifier with k classes."""
@@ -38,19 +38,19 @@ def main():
     args.cluster_dataset = 'train'
     args.pretrained_path = train_function2(args, config)
     done_firsttrain = time()
-    logging.info(f"<============> First training time: {round(done_firsttrain - doneinit, 2)}")
+    logging.info(f"<============> First training time: {round(done_firsttrain - doneinit, 2)} seconds")
 
     """- step 3: extract feature and cluster the datatset by optimal number cluster algorithm."""
     args.cluster_dataset = 'test'
     extract_feature(args, logging, class_merging=True)
     done_extract = time()
-    logging.info(f"<============> Feature extraction time: {done_extract - done_firsttrain}")
+    logging.info(f"<============> Feature extraction time: {round(done_extract - done_firsttrain, 2)} seconds")
     with open(args.fc1_path, 'rb') as f:
         data = pickle.load(f)
     logging.info('start clustering')
     opt_clst = clustering(args, logging, data, org_eval=True)
     done_clustering = time()
-    logging.info(f"<============> Clustering time: {round(done_clustering - done_extract, 2)}")
+    logging.info(f"<============> Clustering time: {round(done_clustering - done_extract, 2)} seconds")
     # logging.info(f'Optimal number of clusters: {opt_clst}')
     opt_clst = list(set(opt_clst))
     # relabel data
@@ -60,7 +60,7 @@ def main():
     relabeling.process_relabel()
     del relabeling
     done_relabel = time()
-    logging.info(f"<============> Relabeling time: {round(done_relabel - done_clustering, 2)}")
+    logging.info(f"<============> Relabeling time: {round(done_relabel - done_clustering, 2)} seconds")
 
     """- step 4: train and valid with new labels retrieved from step 3 --> check accuracy."""
     # train on trainset and validate on test set
@@ -78,7 +78,7 @@ def main():
         # config.TRAIN.END_EPOCH = 20
         train_function(args, config, step=3)
     done_lasttrain = time()
-    logging.info(f"<============> End Training time: {round(done_lasttrain - done_relabel, 2)}")
+    logging.info(f"<============> End Training time: {round(done_lasttrain - done_relabel, 2)} seconds")
 
 
 if __name__ == '__main__':

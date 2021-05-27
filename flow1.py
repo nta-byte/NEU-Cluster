@@ -26,25 +26,25 @@ def main():
     args, logging = init("experiments/stl10/flow1_resnet50_vae.yaml")
     update_config(config, args)
     doneinit = time()
-    logging.info(f"<============> Init time: {round(doneinit - startinit, 2)}")
+    logging.info(f"<============> Init time: {round(doneinit - startinit, 2)} seconds")
 
     """- step 1 : We'll train our system with original train set."""
     args.cluster_dataset = 'train'
     # args.pretrained_path = train_function(args, config, step=1)
     done_firsttrain = time()
-    logging.info(f"<============> First training time: {round(done_firsttrain - doneinit, 2)}")
+    logging.info(f"<============> First training time: {round(done_firsttrain - doneinit, 2)} seconds")
 
     """- step 2: after that, We extract feature from test set and cluster them by optimal number cluster algorithm."""
     args.cluster_dataset = 'test'
     # extract_feature(args, logging)
     done_extract = time()
-    logging.info(f"<============> Feature extraction time: {round(done_extract - done_firsttrain,2)}")
+    logging.info(f"<============> Feature extraction time: {round(done_extract - done_firsttrain,2)} seconds")
     with open(args.fc1_path, 'rb') as f:
         data = pickle.load(f)
     print('start clustering')
     opt_clst = clustering(args, logging, data, org_eval=True)
     done_clustering = time()
-    logging.info(f"<============> Clustering time: {round(done_clustering - done_extract, 2)}")
+    logging.info(f"<============> Clustering time: {round(done_clustering - done_extract, 2)} seconds")
 
     # relabel data
     print('start relabeling data')
@@ -52,7 +52,7 @@ def main():
     relabeling.load_state()
     relabeling.process_relabel()
     done_relabel = time()
-    logging.info(f"<============> Relabeling time: {round(done_relabel - done_clustering, 2)}")
+    logging.info(f"<============> Relabeling time: {round(done_relabel - done_clustering, 2)} seconds")
 
     """- step 3: train and valid test set with new labels retrieved from step 2 --> check accuracy."""
     opt_clst = list(set(opt_clst))
@@ -71,7 +71,7 @@ def main():
         # config.TRAIN.END_EPOCH = 100
         train_function(args, config, step=3)
     done_lasttrain = time()
-    logging.info(f"<============> End training time: {round(done_lasttrain - done_relabel, 2)}")
+    logging.info(f"<============> End training time: {round(done_lasttrain - done_relabel, 2)} seconds")
 
 
 if __name__ == '__main__':

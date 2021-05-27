@@ -7,7 +7,7 @@
 
 - step 3: train and valid test set with new labels retrieved from step 2 --> check accuracy.
 """
-
+from time import time
 import os
 import pickle
 from train_first import train_function
@@ -21,25 +21,33 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 
 def main():
-
+    startinit = time()
     args, logging = init("experiments/neu-cls/flow2_resnet50_vae.yaml")
     update_config(config, args)
+    doneinit = time()
+    logging.info(f"<============> Init time: {round(doneinit - startinit, 2)} seconds")
 
     """- step 1: We extract feature from test set and cluster them by optimal number cluster algorithm."""
     args.cluster_dataset = 'train_test'
     args.pretrained_path = ''
 
     extract_feature(args, logging)
+    done_extract = time()
+    logging.info(f"<============> Feature extraction time: {round(done_extract - doneinit, 2)} seconds")
     with open(args.fc1_path, 'rb') as f:
         data = pickle.load(f)
     print('start clustering')
     opt_clst = clustering(args, logging, data)
+    done_clustering = time()
+    logging.info(f"<============> Clustering time: {round(done_clustering - done_extract, 2)} seconds")
 
     # relabel data
     print('start relabeling data')
     relabeling = get_relabeling(args)(args, data)
     relabeling.load_state()
     relabeling.process_relabel()
+    done_relabel = time()
+    logging.info(f"<============> Relabeling time: {round(done_relabel - done_clustering, 2)} seconds")
 
     """- step 2: train and valid test set with new labels retrieved from step 2 --> check accuracy."""
     opt_clst = list(set(opt_clst))
@@ -56,6 +64,8 @@ def main():
         # config.TRAIN.BEGIN_EPOCH = 0
         # config.TRAIN.END_EPOCH = 50
         train_function(args, config, step=3)
+    done_lasttrain = time()
+    logging.info(f"<============> End Training time: {round(done_lasttrain - done_relabel, 2)} seconds")
 
 
 if __name__ == '__main__':
