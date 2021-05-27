@@ -27,7 +27,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def main():
     startinit = time()
-    args, logging = init("experiments/neu-cls/flow2_resnet50_vae.yaml")
+    args, logging = init("experiments/stl10/flow2_resnet50_vae.yaml")
     update_config(config, args)
     doneinit = time()
     logging.info(f"<============> Init time: {round(doneinit - startinit, 2)}")

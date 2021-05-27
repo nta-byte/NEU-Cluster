@@ -21,8 +21,9 @@ from libs.pretext.utils import get_data_list, load_images
 
 
 class DataPreprocess:
-    def __init__(self, argus, class_merging=False):
+    def __init__(self, argus, class_merging=False, renew_merge=False):
         self.args = argus
+        self.renew_merge = renew_merge
         print(f"dataset: {self.args.dataset}")
         normalize = transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
         self.transform = transforms.Compose([
@@ -32,33 +33,53 @@ class DataPreprocess:
         ])
         trainset = torchvision.datasets.STL10(root=self.args.dataset_root, split='train',
                                               download=True, transform=self.transform,
-                                              # target_transform=onehot,
                                               )
         testset = torchvision.datasets.STL10(root=self.args.dataset_root, split='test',
                                              download=True, transform=self.transform,
-                                             # target_transform=onehot,
                                              )
         trainset.class_to_idx = {_class: i for i, _class in enumerate(trainset.classes)}
         testset.class_to_idx = {_class: i for i, _class in enumerate(testset.classes)}
-        if class_merging:
-            trainset, testset = self.random_class_merging(trainset, testset)
-        print(trainset.classes)
-        # print(trainset.classes)
-        self.le = CustomLabelEncoder()
+        self.original_le = CustomLabelEncoder()
+        self.original_le.mapper = trainset.class_to_idx
 
-        self.le.mapper = trainset.class_to_idx
-        # self.le.fit(self.labels)
-        print(trainset.class_to_idx)
-        self.trainlabels = self.le.inverse_transform(trainset.labels)
-        self.testlabel = self.le.inverse_transform(testset.labels)
+        self.org_trainlabels = self.original_le.inverse_transform(trainset.labels)
+        self.org_testlabel = self.original_le.inverse_transform(testset.labels)
         if self.args.cluster_dataset == 'train':
-            self.labels = self.trainlabels
+            self.org_labels = self.org_trainlabels
         elif self.args.cluster_dataset == 'test':
-            self.labels = self.testlabel
+            self.org_labels = self.org_testlabel
         else:
-            self.labels = np.concatenate((self.trainlabels, self.testlabel))
-        # trainset.targets = onehot(trainset.targets)
-        # testset.targets = onehot(testset.targets)
+            self.org_labels = np.concatenate((self.org_trainlabels, self.org_testlabel))
+
+        if class_merging:
+            if self.renew_merge:
+                self.label_transform = None
+            else:
+                if os.path.isfile(self.args.label_transform_path):
+                    print(f'reload self.label_transform in {self.args.label_transform_path}')
+                    with open(self.args.label_transform_path, 'rb') as f:
+                        self.label_transform = pickle.load(f)
+                else:
+                    self.label_transform = None
+
+            trainset, testset = self.random_class_merging(trainset, testset)
+
+        self.new_le = CustomLabelEncoder()
+        self.new_le.mapper = trainset.class_to_idx
+        # print('class_to_idx', self.original_le.mapper)
+        # print(trainset.classes)
+
+        # self.le.fit(self.labels)
+        self.new_trainlabels = self.new_le.inverse_transform(trainset.labels)
+        self.new_testlabel = self.new_le.inverse_transform(testset.labels)
+        if self.args.cluster_dataset == 'train':
+            self.new_labels = self.new_trainlabels
+        elif self.args.cluster_dataset == 'test':
+            self.new_labels = self.new_testlabel
+        else:
+            self.new_labels = np.concatenate((self.new_trainlabels, self.new_testlabel))
+        print('extract data set org label', set(self.org_labels))
+        print('extract data set new label', set(self.new_labels))
 
         self.train_loader = torch.utils.data.DataLoader(trainset, batch_size=self.args.batch_size,
                                                         shuffle=False, num_workers=self.args.workers)
@@ -67,51 +88,51 @@ class DataPreprocess:
         self.classes = trainset.classes
 
     def random_class_merging(self, trainset=None, testset=None):
-        # print(trainset.class_to_idx)
-        # print(trainset.targets)
         class_to_idx = trainset.class_to_idx
         le = CustomLabelEncoder()
         le.mapper = trainset.class_to_idx
         trainlabels = le.inverse_transform(trainset.labels)
         testlabels = le.inverse_transform(testset.labels)
-        # print(trainlabels)
-        classes = list(class_to_idx.keys())
-        random.shuffle(classes)
-        mergepoint = int(len(classes) / 2)
-        # print(mergepoint)
-        new_classes1 = classes[:mergepoint]
-        new_classes2 = classes[mergepoint:]
-        new_classes = [x1 + "_" + x2 for (x1, x2) in zip(new_classes1, new_classes2)]
-        new_classes_list = [[x1, x2] for (x1, x2) in zip(new_classes1, new_classes2)]
-        # print('new_classes_list', new_classes_list)
-        # print(new_classes2)
-        # print('new_classes', new_classes)
+        print("start to merge classes")
+        if self.label_transform is None:
+            print("create label_transform")
+            self.label_transform = {'converted': {}, 'new_classes': None, 'new_class_to_idx': {},
+                                    'new_le': CustomLabelEncoder()}
+            classes = list(class_to_idx.keys())
+            random.shuffle(classes)
+            mergepoint = int(len(classes) / 2)
+            new_classes1 = classes[:mergepoint]
+            new_classes2 = classes[mergepoint:]
+            self.label_transform['new_classes'] = [x1 + "_" + x2 for (x1, x2) in zip(new_classes1, new_classes2)]
+            new_classes_list = [[x1, x2] for (x1, x2) in zip(new_classes1, new_classes2)]
+            # print(new_classes_list)
+            for group_classes in new_classes_list:
+                self.label_transform['converted'][group_classes[0]] = "_".join(group_classes)
+                self.label_transform['converted'][group_classes[1]] = "_".join(group_classes)
+            for i, x in enumerate(self.label_transform['new_classes']):
+                self.label_transform['new_class_to_idx'][x] = i
 
+            self.label_transform['new_le'].mapper = self.label_transform['new_class_to_idx']
+            with open(Path(self.args.label_transform_path), 'wb') as f:
+                pickle.dump(self.label_transform, f)
+        # else:
         new_trainlabels = [''] * len(trainlabels)
         for iddd, x in enumerate(trainlabels):
-            for idxxxx, new_x in enumerate(new_classes_list):
-                if x in new_x:
-                    new_trainlabels[iddd] = new_classes[idxxxx]
-
+            new_trainlabels[iddd] = self.label_transform['converted'][x]
         new_testlabels = [''] * len(testlabels)
         for iddd, x in enumerate(testlabels):
-            for idxxxx, new_x in enumerate(new_classes_list):
-                if x in new_x:
-                    new_testlabels[iddd] = new_classes[idxxxx]
-        # print('set(trainlabels)', set(trainlabels))
-        # print('set(new_trainlabels)', set(new_trainlabels))
-        new_class_to_idx = {}
-        for i, x in enumerate(new_classes):
-            new_class_to_idx[x] = i
-        # print(new_class_to_idx)
-        new_le = CustomLabelEncoder()
-        new_le.mapper = new_class_to_idx
-        trainset.labels = new_le.transform(new_trainlabels)
-        trainset.class_to_idx = new_class_to_idx
-        trainset.classes = new_classes
-        testset.labels = new_le.transform(new_testlabels)
-        testset.class_to_idx = new_class_to_idx
-        testset.classes = new_classes
+            new_testlabels[iddd] = self.label_transform['converted'][x]
+
+        # new_le = CustomLabelEncoder()
+        trainset.labels = self.label_transform['new_le'].transform(new_trainlabels)
+        print('check1', set(new_trainlabels))
+        trainset.class_to_idx = self.label_transform['new_class_to_idx']
+        trainset.classes = self.label_transform['new_classes']
+        testset.labels = self.label_transform['new_le'].transform(new_testlabels)
+        testset.class_to_idx = self.label_transform['new_class_to_idx']
+        testset.classes = self.label_transform['new_classes']
+        # print("self.label_transform", self.label_transform)
+        # print("self.args.label_transform_path", self.args.label_transform_path)
         return trainset, testset
 
     def infer(self, net, dev):
@@ -164,8 +185,10 @@ class DataPreprocess:
         results = {
             # 'filename': self.files,
             'features': self.output,
-            'labels': self.labels,
-            'le': self.le,
+            'org_labels': self.org_labels,
+            'new_labels': self.new_labels,
+            'original_le': self.original_le,
+            'new_le': self.new_le,
             'layer_name': 'fc1'
         }
 
@@ -175,4 +198,23 @@ class DataPreprocess:
         with open(Path(self.args.fc1_path), 'wb') as f:
             pickle.dump(results, f)
 
-        print(self.output.shape)
+        # print(self.output.shape)
+
+    def save_pretext_for_vae(self):
+        results = {
+            # 'filename': self.files,
+            'features': self.output,
+            'org_labels': self.org_labels,
+            'new_labels': self.new_labels,
+            'original_le': self.original_le,
+            'new_le': self.new_le,
+            'layer_name': 'fc1'
+        }
+
+        feature_dir = Path(self.args.fc1_dir).parent
+
+        os.makedirs(feature_dir, exist_ok=True)
+        with open(Path(self.args.fc1_path_vae), 'wb') as f:
+            pickle.dump(results, f)
+
+        # print(self.output.shape)

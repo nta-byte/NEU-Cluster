@@ -1,6 +1,6 @@
 # general
 dataset: "stl10" # neu-cls or neu-cls-64
-save_dir: "output_save_flow1"
+save_dir: "output_save_flow3"
 save_img_1st_step_dir: "1st_step"
 save_first_train: "1st_train"
 
@@ -9,11 +9,13 @@ dataset_root: "/mnt/data1/ntanh/data"
 data_preprocess_path: ""
 le_path: "label_encoder.pickle" # label encoder model which converts string labels to integers.
 fc1_dir: "raw_features"
+fc1_path_vae: "raw_features"
 relabel_dir: "relabel"
 training_ouput_dir: "output_training"
 
 # cluster dataset
 cluster_dataset: "test" # train, test and train_test
+label_transform_path: "label_transformation.pickle"
 
 # cluster
 kmeans_k_cache_path: "kmeans_acc_vs_k.pickle"
@@ -21,22 +23,23 @@ use_cache: False
 use_histeq: True
 kmeans_n_init: 50
 pca_component: 50
-reduce_dimension: "umap" # umap or pca
+reduce_dimension: "vae" # umap or pca or none or vae
+vae_cfg: "libs/clustering/VAE/experiments/swae_resnet18.yaml"
 pca_whitten: True
 k_min: 3
 k_max: 17
 
 # train options
 batch_size: 256
-image_size: 96
-cfg: "training/experiments/stl10/flow1_resnet50.yaml"
+image_size: 224
+cfg: "training/experiments/stl10/flow3_resnet18.yaml"
 # general
 seed: 42
-workers: 15
+workers: 30
 
 # model options
 framework: "pytorch" # pytorch or tf
-model: "RESNET50" # "VGG16" "RESNET50"
+model: "RESNET18" # "VGG16" "RESNET50"
 model_path: ""
-pretrained_path: "output_save_flow1/stl10_RESNET18_pretrain_PCA50_kmeanNinit50_pytorch_histeq_whitten/1st_train/train_10_cluster/resnet18-Epoch-8-Loss-0.302-Acc-0.9.pth"
+pretrained_path: ""
 reload: False

@@ -12,11 +12,11 @@ exp_params:
 trainer_params:
   resume: False
   optimizer: adam # adam or sgd
-  gpus: '1'
+  gpus: '0'
   max_epochs: 500
   validate_epoch: 5
   batch_size: 900
-  LR: 0.001
+  LR: 0.01
   weight_decay: 0.0005
   scheduler_gamma: 0.95
   momentum: 0.9
