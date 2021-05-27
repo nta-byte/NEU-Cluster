@@ -78,7 +78,7 @@ def train_function(args, configuration, step=1):
 
     # initialize the early_stopping object
     save_best_model = os.path.join(save_dir, f"{config.MODEL.NAME}-best.pth")
-    early_stopping = EarlyStopping(patience=25, verbose=True, path=save_best_model)
+    early_stopping = EarlyStopping(patience=5, verbose=True, path=save_best_model)
 
     # train process
     total_step = len(train_loader)
@@ -106,6 +106,7 @@ def train_function(args, configuration, step=1):
                 if val_loss < min_loss:
                     min_loss = val_loss
                     min_loss_epoch = epoch
+
                 model_path = os.path.join(save_dir,
                                           f"{config.MODEL.NAME}-Epoch-{epoch}-Loss-{val_loss}-Acc-{val_acc}.pth")
                 torch.save(model.state_dict(), model_path)
@@ -116,6 +117,8 @@ def train_function(args, configuration, step=1):
 
             if early_stopping.early_stop:
                 print("Early stopping")
+                break
+            if val_loss == 0.0 or val_acc == 1.0:
                 break
         logging.info('--------------------------------------------')
         if scheduler is not None:
@@ -209,6 +212,8 @@ def train_function2(args, configuration):
 
             if early_stopping.early_stop:
                 print("Early stopping")
+                break
+            if val_loss == 0.0 or val_acc == 1.0:
                 break
         logging.info('--------------------------------------------')
         if scheduler is not None:

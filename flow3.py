@@ -22,11 +22,11 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def main():
 
-    args, logging = init("experiments/mlcc/flow3_resnet18.yaml")
+    args, logging = init("experiments/neu-cls/flow2_resnet50_vae.yaml")
     update_config(config, args)
 
     """- step 1: We extract feature from test set and cluster them by optimal number cluster algorithm."""
-    # args.cluster_dataset = 'train_test'
+    args.cluster_dataset = 'train_test'
     args.pretrained_path = ''
 
     extract_feature(args, logging)

@@ -27,7 +27,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def main():
     startinit = time()
-    args, logging = init("experiments/cifar10/flow2_resnet18_vae.yaml")
+    args, logging = init("experiments/neu-cls/flow2_resnet50_vae.yaml")
     update_config(config, args)
     doneinit = time()
     logging.info(f"<============> Init time: {round(doneinit - startinit, 2)}")
@@ -36,7 +36,7 @@ def main():
     + step 2: train classifier with k classes."""
     # train
     args.cluster_dataset = 'train'
-    # args.pretrained_path = train_function2(args, config)
+    args.pretrained_path = train_function2(args, config)
     done_firsttrain = time()
     logging.info(f"<============> First training time: {round(done_firsttrain - doneinit, 2)}")
 
@@ -78,7 +78,7 @@ def main():
         # config.TRAIN.END_EPOCH = 20
         train_function(args, config, step=3)
     done_lasttrain = time()
-    logging.info(f"<============> Relabeling time: {round(done_lasttrain - done_relabel, 2)}")
+    logging.info(f"<============> End Training time: {round(done_lasttrain - done_relabel, 2)}")
 
 
 if __name__ == '__main__':

@@ -13,7 +13,7 @@ def vae_reduce_dimension(config, data=None, dev=None):
     if dev is None:
         dev = torch.device('cuda:{}'.format(0))
 
-    print('2', config['infer']['weight_path'])
+    # print('2', config['infer']['weight_path'])
     n_genes = config['model_params']['n_genes']
     if data is not None:
         dataset = VAEDataset(datain=data)
@@ -24,8 +24,11 @@ def vae_reduce_dimension(config, data=None, dev=None):
                                             shuffle=False)
     # vae_model = SWAE(n_genes, latent_dim=config['model_params']['latent_dim']).to(dev)
 
+    # vae_model = SWAE(n_genes, latent_dim=config['model_params']['latent_dim'],
+    #                  hidden_dims=config['model_params']['hidden_dims']).to(dev)
     vae_model = SWAE(n_genes, latent_dim=config['model_params']['latent_dim'],
                      hidden_dims=config['model_params']['hidden_dims']).to(dev)
+    # print(vae_model)
     vae_model = load_state(config['infer']['weight_path'], vae_model)
     vae_model.eval()
     output = []

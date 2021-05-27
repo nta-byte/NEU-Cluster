@@ -1,6 +1,6 @@
 # general
 dataset: "neu-cls" # neu-cls or neu-cls-64
-save_dir: "output_save_flow2"
+save_dir: "output_save_flow1"
 save_img_1st_step_dir: "1st_step"
 save_first_train: "1st_train"
 
@@ -23,7 +23,8 @@ use_cache: False
 use_histeq: True
 kmeans_n_init: 50
 pca_component: 50
-reduce_dimension: "umap" # umap or pca
+reduce_dimension: "none" # umap or pca
+vae_cfg: "libs/clustering/VAE/experiments/swae_resnet50.yaml"
 pca_whitten: True
 k_min: 3
 k_max: 17
@@ -31,14 +32,14 @@ k_max: 17
 # train options
 batch_size: 256
 image_size: 200
-cfg: "training/experiments/neu-cls/flow2_resnet18.yaml"
+cfg: "training/experiments/neu-cls/flow1_resnet50.yaml"
 # general
 seed: 42
-workers: 8
+workers: 15
 
 # model options
 framework: "pytorch" # pytorch or tf
-model: "RESNET18" # "VGG16" "RESNET50"
+model: "RESNET50" # "VGG16" "RESNET50"
 model_path: ""
-pretrained_path: "output_save_flow2/neu-cls_RESNET18_pretrain_PCA50_kmeanNinit50_pytorch_histeq_whitten/relabel/output_training/train_6_cluster/resnet18-Epoch-34-Loss-0.018-Acc-0.99.pth"
+pretrained_path: "output_save_flow1/cifar10_RESNET50_transfer_reduce_dim_VAE_latent_dim_3_kmeanNinit50_pytorch_histeq_whitten/1st_train/train_10_cluster/resnet50-Epoch-0-Loss-0.188-Acc-0.94.pth"
 reload: False

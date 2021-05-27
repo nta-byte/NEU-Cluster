@@ -89,9 +89,9 @@ def decrease_dim(args, fc1, data=None):
         vaeconfig['exp_params']['train_data_path'] = args.fc1_path_vae
         vaeconfig['logging_params']['save_dir'] = os.path.join(args.save_dir, vaeconfig['logging_params']['save_dir'])
         # print(vaeconfig)
-
+        # print('0', vaeconfig['model_params']['hidden_dims'])
         vaeconfig['infer']['weight_path'] = fit(vaeconfig)
-        print('1' ,vaeconfig['infer']['weight_path'])
+        # print('1', vaeconfig['infer']['weight_path'])
         x = vae_reduce_dimension(vaeconfig, data)
     elif args.reduce_dimension == 'none':
         x = fc1

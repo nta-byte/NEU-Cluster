@@ -23,13 +23,13 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 def main():
     startinit = time()
-    args, logging = init("experiments/cifar10/flow1_resnet18_vae.yaml")
+    args, logging = init("experiments/neu-cls/flow1_resnet50_vae.yaml")
     update_config(config, args)
     doneinit = time()
     logging.info(f"<============> Init time: {round(doneinit - startinit, 2)}")
 
     """- step 1 : We'll train our system with original train set."""
-    args.cluster_dataset = 'train_test'
+    args.cluster_dataset = 'train'
     args.pretrained_path = train_function(args, config, step=1)
     done_firsttrain = time()
     logging.info(f"<============> First training time: {round(done_firsttrain - doneinit, 2)}")
@@ -38,7 +38,7 @@ def main():
     args.cluster_dataset = 'test'
     extract_feature(args, logging)
     done_extract = time()
-    logging.info(f"<============> Feature extraction time: {done_extract - done_firsttrain}")
+    logging.info(f"<============> Feature extraction time: {(done_extract - done_firsttrain)}")
     with open(args.fc1_path, 'rb') as f:
         data = pickle.load(f)
     print('start clustering')
@@ -71,7 +71,7 @@ def main():
         # config.TRAIN.END_EPOCH = 100
         train_function(args, config, step=3)
     done_lasttrain = time()
-    logging.info(f"<============> Relabeling time: {round(done_lasttrain - done_relabel, 2)}")
+    logging.info(f"<============> End training time: {round(done_lasttrain - done_relabel, 2)}")
 
 
 if __name__ == '__main__':

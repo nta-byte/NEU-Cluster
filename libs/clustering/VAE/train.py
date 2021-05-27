@@ -12,9 +12,9 @@ import yaml
 import argparse
 from datetime import datetime
 
-from data_loader import VAEDataset
-from models.models import VAE, SWAE
-from early_stoppping import EarlyStopping
+from libs.clustering.VAE.data_loader import VAEDataset
+from libs.clustering.VAE.models.models import VAE, SWAE
+from libs.clustering.VAE.early_stoppping import EarlyStopping
 
 
 # return clsloss
@@ -103,15 +103,17 @@ def fit(config):
     device = t.device('cuda:{}'.format(0))
     model = SWAE(n_genes, latent_dim=config['model_params']['latent_dim'],
                  hidden_dims=config['model_params']['hidden_dims']).to(device)
+    # print(model)
     scheduler = None
     # optimizer = optim.Adam(model.parameters())
     optimizer, scheduler = get_optimizer(config, model)
     save_best_model = os.path.join(save_dir, f"{config['model_params']['name']}-best.pth")
-    early_stopping = EarlyStopping(patience=25, verbose=True, path=save_best_model)
+    early_stopping = EarlyStopping(patience=500, verbose=True, path=save_best_model)
     print('initiate training')
     nepochs = config['trainer_params']['max_epochs']
     min_loss = 1e7
     min_loss_epoch = 0
+    model_path = ''
     try:
         for epoch in range(1, nepochs):
             train(model, epoch, optimizer, train_loader, device, n_genes, scheduler=scheduler)
@@ -126,8 +128,8 @@ def fit(config):
                         min_loss = val_loss
                         min_loss_epoch = epoch
                     model_path = os.path.join(save_dir,
-                                              f"{config['model_params']['name']}-Epoch-{epoch}-Loss-{val_loss}.pth")
-
+                                              f"{config['model_params']['name']}-Epoch-{epoch}-Loss-{round(val_loss, 3)}.pth")
+                    torch.save(model.state_dict(), model_path)
                 # print(f"best val Acc: {max_acc} in epoch: {max_acc_epoch}")
                 print(f"Min val Loss: {min_loss} in epoch: {min_loss_epoch}")
                 early_stopping(val_loss, model)
@@ -141,7 +143,10 @@ def fit(config):
 
     except KeyboardInterrupt:
         print('Early Interruption')
-    return save_best_model
+        del (model)
+        return save_best_model
+    del (model)
+    return model_path
 
 
 if __name__ == '__main__':

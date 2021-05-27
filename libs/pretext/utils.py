@@ -62,7 +62,10 @@ def extract_labels(f):
 
 
 def load_state(weight_path, net):
+    # print('3', weight_path)
     pretrained_dict = torch.load(weight_path)
+    # for k, v in pretrained_dict.items():
+    #     print(k)
     model_dict = net.state_dict()
     pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
     # print(len(pretrained_dict.keys()), len(model_dict.keys()))

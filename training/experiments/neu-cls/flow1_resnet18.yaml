@@ -9,7 +9,7 @@ DATASET:
   ROOT: ''
   TEST_DIR: ''
   VAL_DIR: ''
-  TRAIN_DIR: '/data20.04/home/ntanh/SDC_SALa_Clustering/CODE/NEU-Cluster/data/neu-cls/images_preprocessed/images_histeq_resize'
+  TRAIN_DIR: 'data/neu-cls/images_preprocessed/images_histeq_resize'
   NUM_CLASSES: 6
   LE_PATH: ''
 MODEL:

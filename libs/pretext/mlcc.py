@@ -60,8 +60,12 @@ class DataPreprocess:
         elif self.args.cluster_dataset == 'test':
             self.files = self.files[950:]
             self.org_labels = self.org_labels[950:]
+        # for p, l in zip(self.files, self.org_labels):
+        #
+        #     if l != os.path.basename(p).split('_')[0]:
+        #         print(l, os.path.basename(p).split('_'))
         transform_pipeline = transforms.Compose([
-            # transforms.Resize(min_img_size, interpolation=Image.NEAREST),
+            transforms.Resize((self.args.image_size, self.args.image_size)),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                  std=[0.229, 0.224, 0.225])])
@@ -142,7 +146,6 @@ class DataPreprocess:
         self.output = []
         net.eval()
         net = net.to(dev)
-
         for images, labels in self.loader:
             images = images.to(dev)
             with torch.no_grad():
@@ -152,7 +155,6 @@ class DataPreprocess:
         self.output = np.concatenate(self.output, axis=0)
         if len(self.output.shape) > 2:
             self.output = self.output.reshape((self.output.shape[0], self.output.shape[1]))
-        # print(self.output.shape)
 
     def save_output(self):
         results = {
@@ -164,8 +166,6 @@ class DataPreprocess:
             'new_le': self.new_le,
             'layer_name': 'fc1'
         }
-        # print(len(self.labels))
-        # print(len(self.files))
 
         feature_dir = Path(self.args.fc1_dir).parent
 
