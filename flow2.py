@@ -27,7 +27,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def main():
     startinit = time()
-    args, logging = init("experiments/stl10/flow2_resnet50_vae.yaml")
+    args, logging = init("experiments/cifar10/flow2_resnet18_vae_32.yaml")
     update_config(config, args)
     doneinit = time()
     logging.info(f"<============> Init time: {round(doneinit - startinit, 2)} seconds")
@@ -42,7 +42,7 @@ def main():
 
     """- step 3: extract feature and cluster the datatset by optimal number cluster algorithm."""
     args.cluster_dataset = 'test'
-    extract_feature(args, logging, class_merging=True)
+    extract_feature(args, config, logging, class_merging=True)
     done_extract = time()
     logging.info(f"<============> Feature extraction time: {round(done_extract - done_firsttrain, 2)} seconds")
     with open(args.fc1_path, 'rb') as f:

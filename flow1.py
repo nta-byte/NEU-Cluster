@@ -23,14 +23,14 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 def main():
     startinit = time()
-    args, logging = init("experiments/stl10/flow1_resnet50_vae.yaml")
+    args, logging = init("experiments/cifar10/flow1_resnet50_vae.yaml")
     update_config(config, args)
     doneinit = time()
     logging.info(f"<============> Init time: {round(doneinit - startinit, 2)} seconds")
 
     """- step 1 : We'll train our system with original train set."""
     args.cluster_dataset = 'train'
-    # args.pretrained_path = train_function(args, config, step=1)
+    args.pretrained_path = train_function(args, config, step=1)
     done_firsttrain = time()
     logging.info(f"<============> First training time: {round(done_firsttrain - doneinit, 2)} seconds")
 

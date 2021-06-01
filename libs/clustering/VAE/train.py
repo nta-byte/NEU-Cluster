@@ -24,6 +24,7 @@ def get_optimizer(config, model):
     optimizer, scheduler = None, None
     if config['trainer_params']['optimizer'] == 'adam':
         optimizer = torch.optim.Adam(model.parameters(), lr=config['trainer_params']['LR'])
+        # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
     elif config['trainer_params']['optimizer'] == 'sgd':
         optimizer = torch.optim.SGD(model.parameters(), lr=config['trainer_params']['LR'],
                                     momentum=config['trainer_params']['momentum'],

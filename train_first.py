@@ -24,6 +24,7 @@ from training.config import update_config, config
 from libs.utils.yaml_config import init
 from libs.dataset import DataPreprocess
 from libs.pretext import get_data_preprocess
+from libs.pretext.cifar10 import DataPreprocessFlow4
 from training.utils.early_stoppping import EarlyStopping
 
 
@@ -152,7 +153,7 @@ def train_function2(args, configuration):
 
     # data prepare
     DataPreprocess = get_data_preprocess(args)
-    dp = DataPreprocess(args, class_merging=True)
+    dp = DataPreprocess(args, configuration, class_merging=True)
     train_loader, val_loader = dp.train_loader, dp.val_loader
 
     # model prepare
@@ -169,7 +170,7 @@ def train_function2(args, configuration):
 
     # initialize the early_stopping object
     save_best_model = os.path.join(save_dir, f"{config.MODEL.NAME}-best.pth")
-    early_stopping = EarlyStopping(patience=7, verbose=True, path=save_best_model)
+    early_stopping = EarlyStopping(patience=25, verbose=True, path=save_best_model)
 
     # train process
     total_step = len(train_loader)
@@ -220,6 +221,100 @@ def train_function2(args, configuration):
             scheduler.step()
     return smallest_loss_weight_path
 
+
+def train_function3(args, configuration):
+    # preprocess
+    clusters = int(configuration.DATASET.NUM_CLASSES)
+
+    # Init save dir
+    save_dir_root = args.save_first_train
+    save_dir = os.path.join(save_dir_root,
+                            f'train_{clusters}_cluster')
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
+    # Init logging
+    logname = os.path.join(save_dir, 'log_train.txt')
+    handlers = [logging.FileHandler(logname), logging.StreamHandler(sys.stdout)]
+    logging.basicConfig(
+        handlers=handlers,
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.info(args)
+    logging.info(configuration)
+
+    # Device configuration
+    device = torch.device('cuda:{}'.format(configuration.GPUS))
+
+    # data prepare
+    # DataPreprocess = DataPreprocessFlow4(args)
+    dp = DataPreprocessFlow4(args, configuration, add_noise=args.add_noise)
+    train_loader, val_loader = dp.train_loader, dp.val_loader
+
+    # model prepare
+    config.DATASET.NUM_CLASSES = len(dp.classes)
+    model = get_model(configuration)
+    model = model.to(device)
+    # print(model)
+
+    # criteria prepare
+    # Loss and optimizer
+    optimizer, scheduler = get_optimizer(configuration, model)
+    # print(optimizer)
+    criterion = nn.CrossEntropyLoss()
+
+    # initialize the early_stopping object
+    save_best_model = os.path.join(save_dir, f"{config.MODEL.NAME}-best.pth")
+    early_stopping = EarlyStopping(patience=25, verbose=True, path=save_best_model)
+
+    # train process
+    total_step = len(train_loader)
+    classNum = config.DATASET.NUM_CLASSES
+    max_acc = 0
+    max_acc_epoch = 0
+    min_loss = 1e7
+    min_loss_epoch = 0
+    smallest_loss_weight_path = ''
+    for epoch in range(config.TRAIN.BEGIN_EPOCH, config.TRAIN.END_EPOCH):
+        logging.info('Epoch [{}/{}]'.format(epoch, config.TRAIN.END_EPOCH))
+        train_step(loader=train_loader, net=model, crit=criterion, optim=optimizer, dev=device, total_step=total_step,
+                   logging=logging, config=config,
+                   epo=epoch,
+                   debug_steps=config.TRAIN.PRINT_FREQ,
+                   scheduler=scheduler
+                   )
+        if epoch % config.TRAIN.VALIDATION_EPOCH == 0 or epoch == config.TRAIN.END_EPOCH - 1:
+            val_result = evaluation(val_loader, model, criterion, device, classNum=classNum, logging=logging,
+                                    le=dp.classes)
+            val_loss = val_result['loss']
+            val_acc = val_result['acc']
+            if val_acc > max_acc or val_loss < min_loss:
+                model_path = os.path.join(save_dir,
+                                          f"{config.MODEL.NAME}-Epoch-{epoch}-Loss-{val_loss}-Acc-{val_acc}.pth")
+                if val_acc > max_acc:
+                    max_acc = val_acc
+                    max_acc_epoch = epoch
+                if val_loss < min_loss:
+                    min_loss = val_loss
+                    min_loss_epoch = epoch
+                    smallest_loss_weight_path = model_path
+
+                torch.save(model.state_dict(), model_path)
+                logging.info(f"Saved model {model_path}")
+            logging.info(f"best val Acc: {max_acc} in epoch: {max_acc_epoch}")
+            logging.info(f"Min val Loss: {min_loss} in epoch: {min_loss_epoch}")
+
+            early_stopping(val_loss, model)
+
+            if early_stopping.early_stop:
+                print("Early stopping")
+                break
+            if val_loss == 0.0 or val_acc == 1.0:
+                break
+        logging.info('--------------------------------------------')
+        if scheduler is not None:
+            scheduler.step()
+    return smallest_loss_weight_path
 
 def train():
     args, config = parse_args()
