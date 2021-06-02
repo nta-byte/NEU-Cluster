@@ -41,5 +41,5 @@ workers: 15
 framework: "pytorch" # pytorch or tf
 model: "RESNET18" # "VGG16" "RESNET50"
 model_path: ""
-pretrained_path: "output_save_flow1/cifar10_RESNET18_pretrain_reduce_dim_VAE_latent_dim_32_kmeanNinit100_pytorch_histeq_whitten/1st_train/train_10_cluster/resnet18-best.pth"
+pretrained_path: "output_save_flow1/cifar10_RESNET18_pretrain_reduce_dim_NONE_kmeanNinit100_pytorch_histeq_whitten/1st_train/train_10_cluster/resnet18-Epoch-7-Loss-0.178-Acc-0.94.pth"
 reload: False

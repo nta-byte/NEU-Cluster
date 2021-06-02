@@ -18,6 +18,53 @@ from libs.dataset.preprocess import get_list_files
 from libs.helper.classification_tools import CustomLabelEncoder
 from training.utils.loader import onehot
 from libs.pretext.utils import get_data_list, load_images
+# from cluster_run import decrease_dim
+from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
+from sklearn.metrics import *
+from hdbscan import HDBSCAN
+import umap
+
+
+def decrease_dim(args, fc1, data=None):
+    print(f'decrease_dim by {args.reduce_dimension}')
+    if args.reduce_dimension == 'umap':
+
+        x = umap.UMAP(
+            n_neighbors=200,
+            min_dist=0.0,
+            n_components=2,
+            # random_state=42,
+            metric='correlation',
+            init='random',
+        ).fit_transform(fc1,
+                        # y=y_gt
+                        )
+    elif args.reduce_dimension == 'pca':
+        pca = PCA(n_components=args.pca_component, svd_solver='full', whiten=True)
+        pca_nw = PCA(n_components=args.pca_component, svd_solver='full', whiten=False)
+        x = pca.fit_transform(fc1)
+        x_nw = pca_nw.fit_transform(fc1)
+        if not args.pca_whitten:
+            x = x_nw
+    # elif args.reduce_dimension == 'vae':
+    #     with open(args.vae_cfg, 'r') as file:
+    #         try:
+    #             vaeconfig = yaml.safe_load(file)
+    #         except yaml.YAMLError as exc:
+    #             print(exc)
+    #
+    #     print("VAE dim")
+    #     vaeconfig['exp_params']['train_data_path'] = args.fc1_path_vae
+    #     vaeconfig['logging_params']['save_dir'] = os.path.join(args.save_dir, vaeconfig['logging_params']['save_dir'])
+    #     # print(vaeconfig)
+    #     # print('0', vaeconfig['model_params']['hidden_dims'])
+    #     vaeconfig['infer']['weight_path'] = fit(vaeconfig)
+    #     # print('1', vaeconfig['infer']['weight_path'])
+    #     x = vae_reduce_dimension(vaeconfig, data)
+    elif args.reduce_dimension == 'none':
+        x = fc1
+    return x
 
 
 class DataPreprocess:
@@ -238,11 +285,12 @@ class DataPreprocess:
 
 
 class DataPreprocessFlow4:
-    def __init__(self, argus, config, add_noise=.1, active_data='train', renew_noise=False):
+    def __init__(self, argus, config, add_noise=0, active_data='train', renew_noise=False, decrease_dim=False):
         self.noise = add_noise
         self.args = argus
         self.active_data = active_data
         self.renew_noise = renew_noise
+        self.decrease_dim = decrease_dim
         # rs = np.random.RandomState(seed=self.args.seed)
         # self.renew_merge = renew_merge
         print(f"dataset: {self.args.dataset}")
@@ -274,7 +322,6 @@ class DataPreprocessFlow4:
         self.org_testlabels = self.original_le.inverse_transform(self.org_testset.targets)
 
         if add_noise != 0:
-
             if self.renew_noise:
                 self.label_transform = None
             else:
@@ -327,6 +374,9 @@ class DataPreprocessFlow4:
         self.org_trainset.targets = self.label_transform
         # pass
 
+    def drop_class(self):
+        pass
+
     def infer(self, net, dev):
         self.output = []
         net.eval()
@@ -350,6 +400,8 @@ class DataPreprocessFlow4:
             self.output = self.output.reshape((self.output.shape[0], self.output.shape[1]))
 
     def save_output(self):
+        if self.decrease_dim:
+            self.output = decrease_dim(self.args, self.output)
         if self.active_data == 'train':
             results = {
                 'features': self.output,

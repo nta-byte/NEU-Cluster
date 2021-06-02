@@ -41,45 +41,48 @@ def main():
     Step1 ) Train - 50,000 w/ noise is used for first Training -> retrieve trained model. ==> M1.
     """
     args.cluster_dataset = 'train'
-    args.pretrained_path = train_function3(args, config)
+    # args.pretrained_path = train_function3(args, config)
     done_firsttrain = time()
     logging.info(f"<============> First training time: {round(done_firsttrain - doneinit, 2)} seconds")
 
     """Step2 ) Test - 10,000 w/ original gt labels is used for clustering w/ extracting features"""
     # args.cluster_dataset = 'test'
-    extract_feature_flow4(args, config, logging, active_data='test')
-    done_extract = time()
-    logging.info(f"<============> Feature extraction time: {round(done_extract - done_firsttrain, 2)} seconds")
-    # fc1_test_file =
-    fc1_test_file = os.path.join(args.fc1_dir, f'{args.model}_fc1_test_features_std.pickle')
-    with open(fc1_test_file, 'rb') as f:
-        data_test = pickle.load(f)
-    logging.info('start clustering')
-    clustering_flow4(args, logging, data_test, org_eval=True, active_data='test')
-    done_clustering = time()
-    logging.info(f"<============> Clustering time: {round(done_clustering - done_extract, 2)} seconds")
+    # extract_feature_flow4(args, config, logging, active_data='test')
+    # done_extract = time()
+    # logging.info(f"<============> Feature extraction time: {round(done_extract - done_firsttrain, 2)} seconds")
+    # # fc1_test_file =
+    # fc1_test_file = os.path.join(args.fc1_dir, f'{args.model}_fc1_test_features_std.pickle')
+    # with open(fc1_test_file, 'rb') as f:
+    #     data_test = pickle.load(f)
+    # logging.info('start clustering')
+    # opt_clst = clustering_flow4(args, logging, data_test, org_eval=True, active_data='test')
+    opt_clst = [10, 10, 9, 10]
+    opt_clst = list(set(opt_clst))
+    # done_clustering = time()
+    # logging.info(f"<============> Clustering time: {round(done_clustering - done_extract, 2)} seconds")
+
 
     """Step2-1) Relabeling"""
     args.cluster_dataset = 'train'
-    extract_feature_flow4(args, config, logging, active_data='train', add_noise=args.add_noise)
+    # extract_feature_flow4(args, config, logging, active_data='train', add_noise=args.add_noise, decrease_dim=True)
     done_extract = time()
     logging.info(f"<============> Feature extraction time: {round(done_extract - done_firsttrain, 2)} seconds")
     # fc1_train_file = f'{args.model}_fc1_train_features_std.pickle'
     fc1_train_file = os.path.join(args.fc1_dir, f'{args.model}_fc1_train_features_std.pickle')
     with open(fc1_train_file, 'rb') as f:
         data_train = pickle.load(f)
-    logging.info('start clustering')
-    opt_clst = clustering_flow4(args, logging, data_train, org_eval=True, active_data='train')
-    done_clustering = time()
-    logging.info(f"<============> Clustering time: {round(done_clustering - done_extract, 2)} seconds")
-    opt_clst = list(set(opt_clst))
+    # logging.info('start clustering')
+    # opt_clst = clustering_flow4(args, logging, data_train, org_eval=True, active_data='train')
+    # done_clustering = time()
+    # logging.info(f"<============> Clustering time: {round(done_clustering - done_extract, 2)} seconds")
+    # opt_clst = list(set(opt_clst))
 
     logging.info('start relabeling data')
-    relabeling = Relabel_flow4(args, data_train)
+    relabeling = Relabel_flow4(args, data_train, list_optimals=opt_clst, active_data='train')
     relabeling.load_state()
     relabeling.process_relabel()
     done_relabel = time()
-    logging.info(f"<============> Relabeling time: {round(done_relabel - done_clustering, 2)} seconds")
+    # logging.info(f"<============> Relabeling time: {round(done_relabel - done_clustering, 2)} seconds")
 
     """Step3 ) Step2-1( Train - 50,000 w/ clustered labels ) is used for second training  ==> M2"""
     # train on trainset and validate on test set

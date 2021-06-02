@@ -4,40 +4,41 @@ save_dir: "output_save_flow2"
 save_img_1st_step_dir: "1st_step"
 save_first_train: "1st_train"
 
-kmeans_k_cache_path: "kmeans_acc_vs_k.pickle"
-use_cache: True
-label_transform_path: "label_transformation.pickle"
-
 # general
-data_preprocess_path: "data/mlcc/"
+dataset_root: "/mnt/data1/ntanh/data"
+data_preprocess_path: ""
 le_path: "label_encoder.pickle" # label encoder model which converts string labels to integers.
 fc1_dir: "raw_features"
 relabel_dir: "relabel"
 training_ouput_dir: "output_training"
 
+# cluster dataset
+cluster_dataset: "test" # train, test and train_test
+label_transform_path: "label_transformation.pickle"
+
 # cluster
+kmeans_k_cache_path: "kmeans_acc_vs_k.pickle"
+use_cache: False
 use_histeq: True
 kmeans_n_init: 50
-pca_component: 30
+pca_component: 50
+reduce_dimension: "vae" # umap or pca or none or vae
+vae_cfg: "libs/clustering/VAE/experiments/swae_resnet50.yaml"
 pca_whitten: True
 k_min: 3
 k_max: 17
 
-
 # train options
 batch_size: 256
-image_size: 32
-cfg: "training/experiments/cifar10/flow1_resnet50.yaml"
+image_size: 96
+cfg: "training/experiments/cifar10/flow2_resnet50.yaml"
 # general
 seed: 42
-workers: 8
-
+workers: 30
 
 # model options
 framework: "pytorch" # pytorch or tf
-resnet: "ResNet34" # ResNet18 / ResNet34 / ResNet50
 model: "RESNET50" # "VGG16" "RESNET50"
-feature_dim: 128
-model_path: "save/STL-10"
-pretrained_path: "/home/ntanh/ntanh/SDC_SALa_Clustering/CODE/NEU-Cluster/output_save_flow2/cifar10_RESNET50_pretrain_PCA30_kmeanNinit50_pytorch_histeq_whitten/relabel/output_training/train_5_cluster/resnet50-Epoch-0-Loss-0.495-Acc-0.82.pth"
+model_path: ""
+pretrained_path: "output_save_flow2/cifar10_RESNET18_pretrain_reduce_dim_VAE_latent_dim_10_kmeanNinit50_pytorch_histeq_whitten/1st_train/train_5_cluster/resnet18-Epoch-2-Loss-0.141-Acc-0.95.pth"
 reload: False
