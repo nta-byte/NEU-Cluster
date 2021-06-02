@@ -23,9 +23,9 @@ add_noise: 0.1
 kmeans_k_cache_path: "kmeans_acc_vs_k.pickle"
 use_cache: False
 use_histeq: True
-kmeans_n_init: 2
+kmeans_n_init: 50
 pca_component: 50
-reduce_dimension: "none" # umap or pca or none or vae
+reduce_dimension: "umap" # umap or pca or none or vae
 vae_cfg: "libs/clustering/VAE/experiments/swae_resnet18.yaml"
 pca_whitten: True
 k_min: 3

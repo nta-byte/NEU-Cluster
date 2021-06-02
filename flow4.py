@@ -61,7 +61,7 @@ def main():
 
     """Step2-1) Relabeling"""
     args.cluster_dataset = 'train'
-    extract_feature_flow4(args, config, logging, active_data='train')
+    extract_feature_flow4(args, config, logging, active_data='train', add_noise=args.add_noise)
     done_extract = time()
     logging.info(f"<============> Feature extraction time: {round(done_extract - done_firsttrain, 2)} seconds")
     # fc1_train_file = f'{args.model}_fc1_train_features_std.pickle'

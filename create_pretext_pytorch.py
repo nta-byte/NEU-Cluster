@@ -36,7 +36,7 @@ def extract_feature(args, config, logging, class_merging=False):
     del dp
 
 
-def extract_feature_flow4(args, config, logging, active_data='train'):
+def extract_feature_flow4(args, config, logging, active_data='train',add_noise=0):
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     model = get_model(args, activation=False)
@@ -50,7 +50,7 @@ def extract_feature_flow4(args, config, logging, active_data='train'):
     #     dp.save_pretext_for_vae()
     #     args.cluster_dataset = tmp_cluster_dataset
     # DataPreprocess = get_data_preprocess(args)
-    dp = DataPreprocessFlow4(args, config, active_data=active_data)
+    dp = DataPreprocessFlow4(args, config, active_data=active_data,add_noise=add_noise)
     # dp.evaluate(model, device)
     dp.infer(model, device)
     dp.save_output()

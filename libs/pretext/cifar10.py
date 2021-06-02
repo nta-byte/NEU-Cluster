@@ -238,10 +238,11 @@ class DataPreprocess:
 
 
 class DataPreprocessFlow4:
-    def __init__(self, argus, config, add_noise=.1, active_data='train'):
+    def __init__(self, argus, config, add_noise=.1, active_data='train', renew_noise=False):
         self.noise = add_noise
         self.args = argus
         self.active_data = active_data
+        self.renew_noise = renew_noise
         # rs = np.random.RandomState(seed=self.args.seed)
         # self.renew_merge = renew_merge
         print(f"dataset: {self.args.dataset}")
@@ -273,7 +274,20 @@ class DataPreprocessFlow4:
         self.org_testlabels = self.original_le.inverse_transform(self.org_testset.targets)
 
         if add_noise != 0:
+
+            if self.renew_noise:
+                self.label_transform = None
+            else:
+                if os.path.isfile(self.args.label_transform_path):
+                    print(f'reload self.label_transform in {self.args.label_transform_path}')
+                    with open(self.args.label_transform_path, 'rb') as f:
+                        self.label_transform = pickle.load(f)
+                else:
+                    self.label_transform = None
+
             self.create_noise()
+
+        # if class_merging:
 
         self.new_trainlabels = self.original_le.inverse_transform(self.org_trainset.targets)
 
@@ -296,18 +310,21 @@ class DataPreprocessFlow4:
 
     def create_noise(self):
         # self.new_trainlabel = self.org_trainlabels
-        labels = self.org_trainset.targets
-        labels = np.asarray(labels)
-        ix_size = int(self.noise * len(labels))
-        print(ix_size)
-        ix = np.random.choice(len(labels), size=ix_size, replace=False)
-        print(labels)
-        print(ix)
-        b = labels[ix]
-        print(b)
-        np.random.shuffle(b)
-        labels[ix] = b
-        self.org_trainset.targets = labels
+        if self.label_transform is None:
+            self.label_transform = self.org_trainset.targets
+            self.label_transform = np.asarray(self.label_transform)
+            ix_size = int(self.noise * len(self.label_transform))
+            # print(ix_size)
+            ix = np.random.choice(len(self.label_transform), size=ix_size, replace=False)
+            # print(self.label_transform)
+            # print(ix)
+            b = self.label_transform[ix]
+            # print(b)
+            np.random.shuffle(b)
+            self.label_transform[ix] = b
+            with open(Path(self.args.label_transform_path), 'wb') as f:
+                pickle.dump(self.label_transform, f)
+        self.org_trainset.targets = self.label_transform
         # pass
 
     def infer(self, net, dev):
