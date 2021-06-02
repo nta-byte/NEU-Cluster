@@ -33,7 +33,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def main():
     startinit = time()
-    args, logging = init("experiments/cifar10/flow4_resnet18_32.yaml")
+    args, logging = init("experiments/cifar10/flow4_resnet50_32.yaml")
     update_config(config, args)
     doneinit = time()
     logging.info(f"<============> Init time: {round(doneinit - startinit, 2)} seconds")

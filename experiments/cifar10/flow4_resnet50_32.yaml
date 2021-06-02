@@ -23,23 +23,23 @@ add_noise: 0.1
 kmeans_k_cache_path: "kmeans_acc_vs_k.pickle"
 use_cache: False
 use_histeq: True
-kmeans_n_init: 50
+kmeans_n_init: 2
 pca_component: 50
 reduce_dimension: "none" # umap or pca or none or vae
-vae_cfg: "libs/clustering/VAE/experiments/swae_resnet18.yaml"
+vae_cfg: "libs/clustering/VAE/experiments/swae_resnet50.yaml"
 pca_whitten: True
 k_min: 3
 k_max: 17
 
 
-cfg: "training/experiments/cifar10/flow4_resnet18_32.yaml"
+cfg: "training/experiments/cifar10/flow4_resnet50_32.yaml"
 # general
 seed: 42
 workers: 30
 
 # model options
 framework: "pytorch" # pytorch or tf
-model: "RESNET18" # "VGG16" "RESNET50"
+model: "RESNET50" # "VGG16" "RESNET50"
 model_path: ""
-pretrained_path: "output_save_flow4/cifar10_RESNET18_pretrain_reduce_dim_NONE_kmeanNinit50_pytorch_histeq_whitten/1st_train/train_10_cluster/resnet18-Epoch-2-Loss-1.023-Acc-0.71.pth"
+pretrained_path: "output_save_flow4/cifar10_RESNET50_pretrain_reduce_dim_NONE_kmeanNinit50_pytorch_histeq_whitten/1st_train/train_10_cluster/resnet50-Epoch-2-Loss-1.023-Acc-0.71.pth"
 reload: False
