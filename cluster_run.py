@@ -112,12 +112,12 @@ def clustering(args, logging, data, org_eval=True):
         y_gt = le.transform(labels)  # integer labels for each image
         x = decrease_dim(args, fc1, data)
         print("done decrease dimension", x.shape)
-        k_values = np.arange(3, 17)
+        k_values = np.arange(args.k_min, args.k_max)
         acc_k = np.zeros(k_values.shape)
-        rs = np.random.RandomState(seed=987654321)
+        rs = np.random.RandomState(seed=args.seed)
         kmeans_total = {}
         for i, (k, state) in enumerate(zip(k_values, rs.randint(2 ** 32, size=len(k_values)))):
-            kmeans = KMeans(n_clusters=k, init='k-means++', n_init=args.kmeans_n_init, random_state=state)
+            kmeans = KMeans(n_clusters=k, init='k-means++', n_init=args.kmeans_n_init, random_state=args.seed)
 
             cluster_labels = kmeans.fit_predict(x)
             dict_cluster_labels[k] = cluster_labels

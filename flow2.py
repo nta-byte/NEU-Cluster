@@ -27,7 +27,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def main():
     startinit = time()
-    args, logging = init("experiments/cifar10/flow2_resnet18_vae_32.yaml")
+    args, logging = init("experiments/cifar10/flow2_resnet18_32.yaml")
     update_config(config, args)
     doneinit = time()
     logging.info(f"<============> Init time: {round(doneinit - startinit, 2)} seconds")
@@ -51,34 +51,34 @@ def main():
     opt_clst = clustering(args, logging, data, org_eval=True)
     done_clustering = time()
     logging.info(f"<============> Clustering time: {round(done_clustering - done_extract, 2)} seconds")
-    # logging.info(f'Optimal number of clusters: {opt_clst}')
-    opt_clst = list(set(opt_clst))
-    # relabel data
-    logging.info('start relabeling data')
-    relabeling = get_relabeling(args)(args, data)
-    relabeling.load_state()
-    relabeling.process_relabel()
-    del relabeling
-    done_relabel = time()
-    logging.info(f"<============> Relabeling time: {round(done_relabel - done_clustering, 2)} seconds")
-
-    """- step 4: train and valid with new labels retrieved from step 3 --> check accuracy."""
-    # train on trainset and validate on test set
-    for clusters in opt_clst:
-        # clusters = 10
-        config.DATASET.NUM_CLASSES = int(clusters)
-        config.DATASET.LE_PATH = os.path.join(args.relabel_dir, str(clusters) + '_new_le.pkl')
-        config.DATASET.TRAIN_LIST = os.path.join(args.relabel_dir, str(clusters) + '_train.pkl')
-        config.DATASET.VAL_LIST = os.path.join(args.relabel_dir, str(clusters) + '_test.pkl')
-        config.MODEL.PRETRAINED = True
-        config.TRAIN.FINETUNE = ''
-        # config.TRAIN.OPTIMIZER = 'sgd'
-        # config.TRAIN.LR = 0.01
-        # config.TRAIN.BEGIN_EPOCH = 0
-        # config.TRAIN.END_EPOCH = 20
-        train_function(args, config, step=3)
+    # # logging.info(f'Optimal number of clusters: {opt_clst}')
+    # opt_clst = list(set(opt_clst))
+    # # relabel data
+    # logging.info('start relabeling data')
+    # relabeling = get_relabeling(args)(args, data)
+    # relabeling.load_state()
+    # relabeling.process_relabel()
+    # del relabeling
+    # done_relabel = time()
+    # logging.info(f"<============> Relabeling time: {round(done_relabel - done_clustering, 2)} seconds")
+    #
+    # """- step 4: train and valid with new labels retrieved from step 3 --> check accuracy."""
+    # # train on trainset and validate on test set
+    # for clusters in opt_clst:
+    #     # clusters = 10
+    #     config.DATASET.NUM_CLASSES = int(clusters)
+    #     config.DATASET.LE_PATH = os.path.join(args.relabel_dir, str(clusters) + '_new_le.pkl')
+    #     config.DATASET.TRAIN_LIST = os.path.join(args.relabel_dir, str(clusters) + '_train.pkl')
+    #     config.DATASET.VAL_LIST = os.path.join(args.relabel_dir, str(clusters) + '_test.pkl')
+    #     config.MODEL.PRETRAINED = True
+    #     config.TRAIN.FINETUNE = ''
+    #     # config.TRAIN.OPTIMIZER = 'sgd'
+    #     # config.TRAIN.LR = 0.01
+    #     # config.TRAIN.BEGIN_EPOCH = 0
+    #     # config.TRAIN.END_EPOCH = 20
+    #     train_function(args, config, step=3)
     done_lasttrain = time()
-    logging.info(f"<============> End Training time: {round(done_lasttrain - done_relabel, 2)} seconds")
+    logging.info(f"<============> Total Running time: {round(done_lasttrain - startinit, 2)} seconds")
 
 
 if __name__ == '__main__':

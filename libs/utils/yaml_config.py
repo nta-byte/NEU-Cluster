@@ -91,3 +91,7 @@ def init(config_path):
         format='%(asctime)s - %(levelname)s - %(message)s')
     logging.info(args)
     return args, logging
+
+
+def new_init(config_path):
+    pass

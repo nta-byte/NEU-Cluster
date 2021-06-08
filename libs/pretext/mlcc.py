@@ -39,7 +39,7 @@ def mlcc_data_preprocess(args):
 
 
 class DataPreprocess:
-    def __init__(self, argus, class_merging=False, renew_merge=False):
+    def __init__(self, argus, config, class_merging=False, renew_merge=False, add_noise=.1, shuffle_train=False):
         self.args = argus
         self.renew_merge = renew_merge
         print(f"dataset: {self.args.dataset}")
@@ -99,7 +99,7 @@ class DataPreprocess:
 
         # # Data loader
         self.train_loader = torch.utils.data.DataLoader(trainset, batch_size=self.args.batch_size,
-                                                        shuffle=True, num_workers=self.args.workers)
+                                                        shuffle=shuffle_train, num_workers=self.args.workers)
 
         self.val_loader = torch.utils.data.DataLoader(testset, batch_size=self.args.batch_size,
                                                       shuffle=False, num_workers=self.args.workers)

@@ -153,7 +153,7 @@ def train_function2(args, configuration):
 
     # data prepare
     DataPreprocess = get_data_preprocess(args)
-    dp = DataPreprocess(args, configuration, class_merging=True)
+    dp = DataPreprocess(args, configuration, class_merging=True, shuffle_train=True)
     train_loader, val_loader = dp.train_loader, dp.val_loader
 
     # model prepare
@@ -170,7 +170,7 @@ def train_function2(args, configuration):
 
     # initialize the early_stopping object
     save_best_model = os.path.join(save_dir, f"{config.MODEL.NAME}-best.pth")
-    early_stopping = EarlyStopping(patience=25, verbose=True, path=save_best_model)
+    early_stopping = EarlyStopping(patience=7, verbose=True, path=save_best_model)
 
     # train process
     total_step = len(train_loader)
