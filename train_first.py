@@ -20,7 +20,7 @@ from training.model import get_model
 # from training.utils.loader import DataLoader, NewPad, data_loader_idcard, ImgAugTransform
 from training.utils.core import train_step, evaluation
 from training.utils.optimizer import get_optimizer
-from training.config import update_config, config
+# from training.config import update_config, config
 from libs.utils.yaml_config import init
 from libs.dataset import DataPreprocess
 from libs.pretext import get_data_preprocess
@@ -127,14 +127,15 @@ def train_function(args, configuration, step=1):
     return save_best_model
 
 
-def train_function2(args, configuration):
+def train_function2(cfg):
     # preprocess
-    clusters = int(configuration.DATASET.NUM_CLASSES / 2)
+    clusters = int(cfg['master_model_params'].DATASET.NUM_CLASSES / 2)
 
     # Init save dir
-    save_dir_root = args.save_first_train
+    save_dir_root = cfg['general']['first_train_dir']
     save_dir = os.path.join(save_dir_root,
                             f'train_{clusters}_cluster')
+    config = cfg['master_model_params']
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
@@ -145,26 +146,26 @@ def train_function2(args, configuration):
         handlers=handlers,
         level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s')
-    logging.info(args)
-    logging.info(configuration)
+    logging.info(cfg)
+    logging.info(cfg['master_model_params'])
 
     # Device configuration
-    device = torch.device('cuda:{}'.format(configuration.GPUS))
+    device = torch.device('cuda:{}'.format(cfg['master_model_params'].GPUS))
 
     # data prepare
-    DataPreprocess = get_data_preprocess(args)
-    dp = DataPreprocess(args, configuration, class_merging=True, shuffle_train=True)
+    DataPreprocess = get_data_preprocess(cfg)
+    dp = DataPreprocess(cfg, class_merging=True, shuffle_train=True, dataset_part='train')
     train_loader, val_loader = dp.train_loader, dp.val_loader
 
     # model prepare
     config.DATASET.NUM_CLASSES = len(dp.classes)
-    model = get_model(configuration)
+    model = get_model(cfg['master_model_params'])
     model = model.to(device)
     # print(model)
 
     # criteria prepare
     # Loss and optimizer
-    optimizer, scheduler = get_optimizer(configuration, model)
+    optimizer, scheduler = get_optimizer(cfg['master_model_params'], model)
     # print(optimizer)
     criterion = nn.CrossEntropyLoss()
 
@@ -315,6 +316,7 @@ def train_function3(args, configuration):
         if scheduler is not None:
             scheduler.step()
     return smallest_loss_weight_path
+
 
 def train():
     args, config = parse_args()

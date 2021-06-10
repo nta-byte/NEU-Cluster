@@ -1,49 +1,123 @@
 general:
   save_dir: "output_save_flow2"
-  save_img_1st_step_dir: "1st_step"
-  save_first_train: "1st_train"
-  dataset_root: "/mnt/data1/ntanh/data"
+  save_cluster_visualization: "cluster_visual"
+  first_train_dir: "1st_training"
+  last_train_dir: "last_training"
   data_preprocess_path: ""
+  framework: "pytorch" # pytorch or tf
+  seed: 42
+
 
 pretext_params:
-  le_path: "label_encoder.pickle" # label encoder model which converts string labels to integers.
+  le_path: "label_encoder.pkl" # label encoder model which converts string labels to integers.
   fc1_dir: "raw_features"
+  label_transform_path: "label_transform.pkl"
+  dataset_part: "test"
+
+reduce_dimension_params:
+  type: "umap" # umap or pca or vae or none
+  dataset_part: "test" # train, test and train_test
+  vae_params:
+    model_params:
+      name: 'SWAE'
+      n_genes: 512
+      latent_dim: 10
+      hidden_dims: [256]
+    exp_params:
+      dataset: cifar10
+      train_data_path: ""
+      val_data_path: ""
+    trainer_params:
+      resume: False
+      optimizer: adam # adam or sgd
+      gpus: '0'
+      max_epochs: 500
+      validate_epoch: 5
+      batch_size: 6400
+      LR: 0.001
+      weight_decay: 0.0001
+      scheduler_gamma: 0.95
+      momentum: 0.9
+    logging_params:
+      save_dir: "vae_ouput/cifar10/"
+      name: "SWAE"
+      manual_seed: 1265
+    infer:
+      weight_path: "output_save_flow1/cifar10_RESNET18_pretrain_reduce_dim_VAE_latent_dim_10_kmeanNinit100_pytorch_histeq_whitten/vae_ouput/cifar10/SWAE-best.pth"
+
+  pca_params:
+    whitten: True
+    dims: 50
+  umap_params:
+    dims: 2
+
+
+clustering_params:
+  type: "kmean"
+  dataset_part: "test" # train, test and train_test
+  seed: 1234
+  kmean:
+    k_min: 3
+    k_max: 17
+    n_init: 50
+    cache_path: "kmeans_acc_vs_k.pickle"
+    use_cache: True
+
+relabel_params:
   relabel_dir: "relabel"
-
-dataset_params:
-  name: "cifar10" # neu-cls or neu-cls-64
-  use_histeq: True
-
-# cluster dataset
-cluster_dataset: "test" # train, test and train_test
-reduce_dimension: "umap" # umap or pca or vae
-
-vae_params:
+  dataset_part: "test"
 
 
-pca_params:
-  pca_whitten: True
-  pca_component: 50
+master_model_params:
+  GPUS: (0)
+  OUTPUT_DIR: 'output'
+  LOG_DIR: 'log'
+  WORKERS: 10
 
-kmean_params:
-  k_min: 3
-  k_max: 17
-  kmeans_n_init: 50
-  kmeans_k_cache_path: "kmeans_acc_vs_k.pickle"
-  use_cache: True
+  DATASET:
+    DATASET: 'cifar10'
+    ROOT: '/mnt/data1/ntanh/data'
+    TEST_DIR: ''
+    VAL_DIR: ''
+    TRAIN_DIR: ''
+    NUM_CLASSES: 10
+    LE_PATH: ''
+    use_histeq: True
 
-train_params:
-  batch_size: 256
-  image_size: 224
-  cfg: "training/experiments/cifar10/flow2_resnet18.yaml"
-  # general
-  seed: 42
-  workers: 8
-  training_ouput_dir: "output_training"
+  MODEL:
+    NAME: resnet18
+    PRETRAINED: true
+    HEAD: ''
+    BACKBONE: ''
+  #LOSS:
 
-model_params:
-  framework: "pytorch" # pytorch or tf
-  model: "RESNET18" # "VGG16" "RESNET50"
-  model_path: ""
-  pretrained_path: "output_save_flow2/cifar10_RESNET18_transfer_PCA30_kmeanNinit50_pytorch_histeq_whitten/relabel/output_training/train_5_cluster/resnet18-Epoch-180-Loss-2.306-Acc-0.85.pth"
-  reload: False
+  TRAIN:
+    FINETUNE: ''
+    IMAGE_SIZE:
+      - 32
+      - 32
+    BATCH_SIZE: 256
+    SHUFFLE: true
+    BEGIN_EPOCH: 0
+    END_EPOCH: 100
+    RESUME: true
+    OPTIMIZER: adam # adam or sgd
+    LR: 0.001
+    DROPOUT: 0.1
+    PRINT_FREQ: 100
+    RANDOM_CROP: true
+    RESIZE: false
+    VALIDATION_EPOCH: 2
+
+  TEST:
+    IMAGE_SIZE:
+      - 32
+      - 32
+    BATCH_SIZE: 256
+    pretrained_path: "output_save_flow2/cifar10_RESNET18_reduce_dim_UMAP_dims_2_kmeanNinit50_pytorch_histeq/1st_training/train_5_cluster/resnet18-Epoch-10-Loss-0.37-Acc-0.87.pth"
+
+#model_params:
+#
+#  model_path: ""
+#  pretrained_path: "output_save_flow2/cifar10_RESNET18_transfer_PCA30_kmeanNinit50_pytorch_histeq_whitten/relabel/output_training/train_5_cluster/resnet18-Epoch-180-Loss-2.306-Acc-0.85.pth"
+#  reload: False

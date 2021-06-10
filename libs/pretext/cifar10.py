@@ -68,10 +68,13 @@ def decrease_dim(args, fc1, data=None):
 
 
 class DataPreprocess:
-    def __init__(self, argus, config, class_merging=False, renew_merge=False, add_noise=.1, shuffle_train=False):
-        self.args = argus
+    def __init__(self, cfg, class_merging=False, renew_merge=False, add_noise=.1, shuffle_train=False,
+                 dataset_part='train'):
+        self.cfg = cfg
         self.renew_merge = renew_merge
-        print(f"dataset: {self.args.dataset}")
+        self.dataset_part = dataset_part
+        self.config = self.cfg['master_model_params']
+        # print(f"dataset: {self.cfg.dataset}")
         # normalize = transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
         # self.transform = transforms.Compose([
         #     transforms.Resize((self.args.image_size, self.args.image_size)),
@@ -80,8 +83,8 @@ class DataPreprocess:
         # ])
         normalize = transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
         transform_train = transforms.Compose([
-            transforms.Resize((config.TRAIN.IMAGE_SIZE[0], config.TRAIN.IMAGE_SIZE[1])),
-            transforms.RandomCrop(config.TRAIN.IMAGE_SIZE[0], padding=4),
+            transforms.Resize((self.config.TRAIN.IMAGE_SIZE[0], self.config.TRAIN.IMAGE_SIZE[1])),
+            transforms.RandomCrop(self.config.TRAIN.IMAGE_SIZE[0], padding=4),
             transforms.RandomHorizontalFlip(),
             # transforms.RandomVerticalFlip(),
             transforms.ToTensor(),
@@ -89,14 +92,14 @@ class DataPreprocess:
         ])
 
         transform_val = transforms.Compose([
-            transforms.Resize((config.TRAIN.IMAGE_SIZE[0], config.TRAIN.IMAGE_SIZE[1])),
+            transforms.Resize((self.config.TRAIN.IMAGE_SIZE[0], self.config.TRAIN.IMAGE_SIZE[1])),
             transforms.ToTensor(),  # 3*H*W, [0, 1]
             normalize])
-        trainset = torchvision.datasets.CIFAR10(root=self.args.dataset_root, train=True,
+        trainset = torchvision.datasets.CIFAR10(root=self.config.DATASET.ROOT, train=True,
                                                 download=True, transform=transform_train,
                                                 )
 
-        testset = torchvision.datasets.CIFAR10(root=self.args.dataset_root, train=False,
+        testset = torchvision.datasets.CIFAR10(root=self.config.DATASET.ROOT, train=False,
                                                download=True, transform=transform_val,
                                                )
         self.original_le = CustomLabelEncoder()
@@ -104,9 +107,9 @@ class DataPreprocess:
 
         self.org_trainlabels = self.original_le.inverse_transform(trainset.targets)
         self.org_testlabel = self.original_le.inverse_transform(testset.targets)
-        if self.args.cluster_dataset == 'train':
+        if self.dataset_part == 'train':
             self.org_labels = self.org_trainlabels
-        elif self.args.cluster_dataset == 'test':
+        elif self.dataset_part == 'test':
             self.org_labels = self.org_testlabel
         else:
             self.org_labels = np.concatenate((self.org_trainlabels, self.org_testlabel))
@@ -115,9 +118,9 @@ class DataPreprocess:
             if self.renew_merge:
                 self.label_transform = None
             else:
-                if os.path.isfile(self.args.label_transform_path):
-                    print(f'reload self.label_transform in {self.args.label_transform_path}')
-                    with open(self.args.label_transform_path, 'rb') as f:
+                if os.path.isfile(self.cfg['pretext_params']['label_transform_path']):
+                    print(f"reload self.label_transform in {self.cfg['pretext_params']['label_transform_path']}")
+                    with open(self.cfg['pretext_params']['label_transform_path'], 'rb') as f:
                         self.label_transform = pickle.load(f)
                 else:
                     self.label_transform = None
@@ -132,9 +135,9 @@ class DataPreprocess:
 
         self.new_trainlabels = self.new_le.inverse_transform(trainset.targets)
         self.new_testlabel = self.new_le.inverse_transform(testset.targets)
-        if self.args.cluster_dataset == 'train':
+        if self.dataset_part == 'train':
             self.new_labels = self.new_trainlabels
-        elif self.args.cluster_dataset == 'test':
+        elif self.dataset_part == 'test':
             self.new_labels = self.new_testlabel
         else:
             self.new_labels = np.concatenate((self.new_trainlabels, self.new_testlabel))
@@ -142,11 +145,11 @@ class DataPreprocess:
         print('extract data set org label', set(self.org_labels))
         print('extract data set new label', set(self.new_labels))
 
-        self.train_loader = torch.utils.data.DataLoader(trainset, batch_size=self.args.batch_size,
-                                                        shuffle=shuffle_train, num_workers=self.args.workers)
+        self.train_loader = torch.utils.data.DataLoader(trainset, batch_size=self.config.TRAIN.BATCH_SIZE,
+                                                        shuffle=shuffle_train, num_workers=self.config.WORKERS)
 
-        self.val_loader = torch.utils.data.DataLoader(testset, batch_size=self.args.batch_size,
-                                                      shuffle=False, num_workers=self.args.workers)
+        self.val_loader = torch.utils.data.DataLoader(testset, batch_size=self.config.TEST.BATCH_SIZE,
+                                                      shuffle=False, num_workers=self.config.WORKERS)
         self.classes = trainset.classes
 
     def random_class_merging(self, trainset=None, testset=None):
@@ -175,7 +178,7 @@ class DataPreprocess:
                 self.label_transform['new_class_to_idx'][x] = i
 
             self.label_transform['new_le'].mapper = self.label_transform['new_class_to_idx']
-            with open(Path(self.args.label_transform_path), 'wb') as f:
+            with open(Path(self.cfg['pretext_params']['label_transform_path']), 'wb') as f:
                 pickle.dump(self.label_transform, f)
         # else:
         new_trainlabels = [''] * len(trainlabels)
@@ -204,14 +207,14 @@ class DataPreprocess:
         self.output = []
         net.eval()
         net = net.to(dev)
-        if self.args.cluster_dataset == 'train' or self.args.cluster_dataset == 'train_test':
+        if self.dataset_part == 'train' or self.dataset_part == 'train_test':
             for images, labels in self.train_loader:
                 images = images.to(dev)
                 with torch.no_grad():
                     out = net(images)
                     out = out.cpu().detach().numpy()
                     self.output.append(out)
-        if self.args.cluster_dataset == 'test' or self.args.cluster_dataset == 'train_test':
+        if self.dataset_part == 'test' or self.dataset_part == 'train_test':
             for images, labels in self.val_loader:
                 images = images.to(dev)
                 with torch.no_grad():
@@ -257,10 +260,10 @@ class DataPreprocess:
             'layer_name': 'fc1'
         }
 
-        feature_dir = Path(self.args.fc1_dir).parent
+        feature_dir = Path(self.cfg['pretext_params']['fc1_dir']).parent
 
         os.makedirs(feature_dir, exist_ok=True)
-        with open(Path(self.args.fc1_path), 'wb') as f:
+        with open(Path(self.cfg['pretext_params']['fc1_path']), 'wb') as f:
             pickle.dump(results, f)
 
         # print(self.output.shape)
@@ -276,10 +279,10 @@ class DataPreprocess:
             'layer_name': 'fc1'
         }
 
-        feature_dir = Path(self.args.fc1_dir).parent
+        feature_dir = Path(self.cfg['pretext_params']['fc1_dir']).parent
 
         os.makedirs(feature_dir, exist_ok=True)
-        with open(Path(self.args.fc1_path_vae), 'wb') as f:
+        with open(Path(self.cfg['pretext_params']['reduce_dimension_params']['vae_params']['exp_params']['train_data_path']), 'wb') as f:
             pickle.dump(results, f)
 
         # print(self.output.shape)

@@ -28,14 +28,14 @@ def get_optimal(logging, k_values, y, direction="decreasing", curve="convex", me
     logging.info(f"{metric}: The optimal number of clusters: {optimal.knee} with an inertia of {optimal.knee_y}")
 
 
-def print_optimal(logging, dict_data, metric='', args=None):
+def print_optimal(logging, dict_data, metric='', cfg=None):
     dict_data = dict(sorted(dict_data.items(), key=lambda item: item[1]))
     optimal_cluster = [*dict_data][-1]
     logging.info(
         f"{metric}: The optimal number of clusters: {optimal_cluster} with an inertia of {dict_data[optimal_cluster]}")
     sav_figure_name = "{}_.jpg".format(metric)
-    if args is not None:
-        sav_figure_name = os.path.join(args.save_dir, sav_figure_name)
+    if cfg is not None:
+        sav_figure_name = os.path.join(cfg['general']['save_dir'], sav_figure_name)
     sub_visual(dict_data, metric, save_name=sav_figure_name)
     return optimal_cluster
 
@@ -57,9 +57,9 @@ def sub_visual(dict_in, title='', save_name=''):
     plt.savefig(save_name)
 
 
-def decrease_dim(args, fc1, data=None):
-    print(f'decrease_dim by {args.reduce_dimension}')
-    if args.reduce_dimension == 'umap':
+def decrease_dim(cfg, fc1, data=None):
+    print(f"decrease_dim by {cfg['reduce_dimension_params']['type']}")
+    if cfg['reduce_dimension_params']['type'] == 'umap':
 
         x = umap.UMAP(
             n_neighbors=200,
@@ -71,34 +71,37 @@ def decrease_dim(args, fc1, data=None):
         ).fit_transform(fc1,
                         # y=y_gt
                         )
-    elif args.reduce_dimension == 'pca':
-        pca = PCA(n_components=args.pca_component, svd_solver='full', whiten=True)
-        pca_nw = PCA(n_components=args.pca_component, svd_solver='full', whiten=False)
+    elif cfg['reduce_dimension_params']['type'] == 'pca':
+        n_components = cfg['reduce_dimension_params']['pca_params']['dims']
+        whitten = cfg['reduce_dimension_params']['pca_params']['whitten']
+        pca = PCA(n_components=n_components, svd_solver='full', whiten=whitten)
+        # pca_nw = PCA(n_components=n_components, svd_solver='full', whiten=False)
         x = pca.fit_transform(fc1)
-        x_nw = pca_nw.fit_transform(fc1)
-        if not args.pca_whitten:
-            x = x_nw
-    elif args.reduce_dimension == 'vae':
-        with open(args.vae_cfg, 'r') as file:
-            try:
-                vaeconfig = yaml.safe_load(file)
-            except yaml.YAMLError as exc:
-                print(exc)
+        # x_nw = pca_nw.fit_transform(fc1)
+        # if not whitten:
+        #     x = x_nw
+    elif cfg['reduce_dimension_params']['type'] == 'vae':
+        vaeconfig = cfg['reduce_dimension_params']['vae_params']
+        # with open(cfg.vae_cfg, 'r') as file:
+        #     try:
+        #         vaeconfig = yaml.safe_load(file)
+        #     except yaml.YAMLError as exc:
+        #         print(exc)
 
         print("VAE dim")
-        vaeconfig['exp_params']['train_data_path'] = args.fc1_path_vae
-        vaeconfig['logging_params']['save_dir'] = os.path.join(args.save_dir, vaeconfig['logging_params']['save_dir'])
+        vaeconfig['exp_params']['train_data_path'] = cfg.fc1_path_vae
+        vaeconfig['logging_params']['save_dir'] = os.path.join(cfg.save_dir, vaeconfig['logging_params']['save_dir'])
         # print(vaeconfig)
         # print('0', vaeconfig['model_params']['hidden_dims'])
         vaeconfig['infer']['weight_path'] = fit(vaeconfig)
         # print('1', vaeconfig['infer']['weight_path'])
         x = vae_reduce_dimension(vaeconfig, data)
-    elif args.reduce_dimension == 'none':
+    elif cfg.reduce_dimension == 'none':
         x = fc1
     return x
 
 
-def clustering(args, logging, data, org_eval=True):
+def clustering(cfg, logging, data, org_eval=True):
     fc1 = data['features']  # array containing fc1 features for each file
     labels = data['org_labels'] if org_eval else data['new_labels']  # string labels for each image
     le = data['original_le'] if org_eval else data['new_le']
@@ -108,16 +111,20 @@ def clustering(args, logging, data, org_eval=True):
     dict_adjusted_rand = {}
     dict_silhouette = {}
     dict_cluster_labels = {}
-    if not args.use_cache or not os.path.isfile(args.kmeans_k_cache_path):
+    c_params = cfg['clustering_params']
+    # todo: continue modify parameters
+    if not c_params['kmean']['use_cache'] or not os.path.isfile(
+            c_params['kmean']['cache_path']):
         y_gt = le.transform(labels)  # integer labels for each image
-        x = decrease_dim(args, fc1, data)
+        x = decrease_dim(cfg, fc1, data)
         print("done decrease dimension", x.shape)
-        k_values = np.arange(args.k_min, args.k_max)
+        k_values = np.arange(c_params['kmean']['k_min'], c_params['kmean']['k_max'])
         acc_k = np.zeros(k_values.shape)
-        rs = np.random.RandomState(seed=args.seed)
+        rs = np.random.RandomState(seed=c_params['seed'])
         kmeans_total = {}
         for i, (k, state) in enumerate(zip(k_values, rs.randint(2 ** 32, size=len(k_values)))):
-            kmeans = KMeans(n_clusters=k, init='k-means++', n_init=args.kmeans_n_init, random_state=args.seed)
+            kmeans = KMeans(n_clusters=k, init='k-means++', n_init=c_params['kmean']['n_init'],
+                            random_state=c_params['seed'])
 
             cluster_labels = kmeans.fit_predict(x)
             dict_cluster_labels[k] = cluster_labels
@@ -148,7 +155,7 @@ def clustering(args, logging, data, org_eval=True):
             dict_silhouette[k] = 1
 
             sav_figure_name = "{}_{}_.jpg".format(k, acc_k[i])
-            sav_figure_name = os.path.join(args.save_img_1st_step_dir, sav_figure_name)
+            sav_figure_name = os.path.join(cfg['general']['save_cluster_visualization'], sav_figure_name)
             visual(y_pred_, kmeans, le, x, sav_figure_name, k)
 
             print(
@@ -162,15 +169,15 @@ def clustering(args, logging, data, org_eval=True):
                     dict_silhouette[k],
                 ))
         optimal_cluster_list = []
-        optimal_cluster_list.append(print_optimal(logging, dict_fow_avg, metric='fowlkes_mallows_score', args=args))
+        optimal_cluster_list.append(print_optimal(logging, dict_fow_avg, metric='fowlkes_mallows_score', cfg=cfg))
         optimal_cluster_list.append(
-            print_optimal(logging, dict_adjusted_mutual_info, metric='adjusted_mutual_info_score', args=args))
+            print_optimal(logging, dict_adjusted_mutual_info, metric='adjusted_mutual_info_score', cfg=cfg))
         optimal_cluster_list.append(
-            print_optimal(logging, dict_normalized_mutual_info, metric='normalized_mutual_info_score', args=args))
-        optimal_cluster_list.append(print_optimal(logging, dict_adjusted_rand, metric='adjusted_rand_score', args=args))
+            print_optimal(logging, dict_normalized_mutual_info, metric='normalized_mutual_info_score', cfg=cfg))
+        optimal_cluster_list.append(print_optimal(logging, dict_adjusted_rand, metric='adjusted_rand_score', cfg=cfg))
         # optimal_cluster_list.append(print_optimal(logging, dict_silhouette, metric='silhouette_score', args=args))
 
-        with open(args.kmeans_k_cache_path, 'wb') as f:
+        with open(cfg['clustering_params']['kmean']['cache_path'], 'wb') as f:
             pickle.dump({
                 'kmean': kmeans_total,
                 'k_values': k_values,
@@ -184,7 +191,7 @@ def clustering(args, logging, data, org_eval=True):
                 'optimal_cluster_list': optimal_cluster_list
             }, f)
     else:
-        with open(args.kmeans_k_cache_path, 'rb') as f:
+        with open(cfg['clustering_params']['kmean']['cache_path'], 'rb') as f:
             results_ = pickle.load(f)
             k_values = results_['k_values']
             acc_k = results_['acc_k']
@@ -278,12 +285,12 @@ def clustering_flow4(args, logging, data, org_eval=True, active_data='train'):
                     dict_silhouette[k],
                 ))
         optimal_cluster_list = []
-        optimal_cluster_list.append(print_optimal(logging, dict_fow_avg, metric='fowlkes_mallows_score', args=args))
+        optimal_cluster_list.append(print_optimal(logging, dict_fow_avg, metric='fowlkes_mallows_score', cfg=args))
         optimal_cluster_list.append(
-            print_optimal(logging, dict_adjusted_mutual_info, metric='adjusted_mutual_info_score', args=args))
+            print_optimal(logging, dict_adjusted_mutual_info, metric='adjusted_mutual_info_score', cfg=args))
         optimal_cluster_list.append(
-            print_optimal(logging, dict_normalized_mutual_info, metric='normalized_mutual_info_score', args=args))
-        optimal_cluster_list.append(print_optimal(logging, dict_adjusted_rand, metric='adjusted_rand_score', args=args))
+            print_optimal(logging, dict_normalized_mutual_info, metric='normalized_mutual_info_score', cfg=args))
+        optimal_cluster_list.append(print_optimal(logging, dict_adjusted_rand, metric='adjusted_rand_score', cfg=args))
         # optimal_cluster_list.append(print_optimal(logging, dict_silhouette, metric='silhouette_score', args=args))
 
         with open(args.kmeans_k_cache_path, 'wb') as f:
@@ -448,11 +455,11 @@ def main():
             ))
 
     get_optimal(logging, k_values, list_davies_avg, metric='davies_bouldin_score')
-    print_optimal(logging, dict_calinski_avg, metric='calinski_harabasz_score', args=args)
-    print_optimal(logging, dict_fow_avg, metric='fowlkes_mallows_score', args=args)
-    print_optimal(logging, dict_adjusted_mutual_info, metric='adjusted_mutual_info_score', args=args)
-    print_optimal(logging, dict_normalized_mutual_info, metric='normalized_mutual_info_score', args=args)
-    print_optimal(logging, dict_adjusted_rand, metric='adjusted_rand_score', args=args)
+    print_optimal(logging, dict_calinski_avg, metric='calinski_harabasz_score', cfg=args)
+    print_optimal(logging, dict_fow_avg, metric='fowlkes_mallows_score', cfg=args)
+    print_optimal(logging, dict_adjusted_mutual_info, metric='adjusted_mutual_info_score', cfg=args)
+    print_optimal(logging, dict_normalized_mutual_info, metric='normalized_mutual_info_score', cfg=args)
+    print_optimal(logging, dict_adjusted_rand, metric='adjusted_rand_score', cfg=args)
 
 
 def umap_clustering():

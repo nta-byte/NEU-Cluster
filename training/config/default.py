@@ -30,7 +30,6 @@ _C.MODEL.BACKBONE = ''
 
 # _C.LOSS = CN()
 
-
 # DATASET related params
 _C.DATASET = CN()
 _C.DATASET.ROOT = ''
@@ -44,6 +43,7 @@ _C.DATASET.VAL_LIST = ''
 _C.DATASET.TRAIN_DIR = ''
 _C.DATASET.TEST_DIR = ''
 _C.DATASET.VAL_DIR = ''
+_C.DATASET.use_histeq = True
 
 # training
 _C.TRAIN = CN()
@@ -68,19 +68,34 @@ _C.TEST.IMAGE_SIZE = [192, 192]  # width * height
 _C.TEST.BATCH_SIZE = 1
 _C.TEST.MODEL_FILE = ''
 _C.TEST.CENTER_CROP_TEST = False
+_C.TEST.pretrained_path = ''
 
 # debug
 _C.DEBUG = CN()
 _C.DEBUG.DEBUG = False
 
 
-def update_config(cfg, args):
+def update_config_from_file(cfg, yaml_file):
     cfg.defrost()
 
-    cfg.merge_from_file(args.cfg)
+    cfg.merge_from_file(yaml_file)
     # cfg.merge_from_list(args.opts)
 
     # cfg.freeze()
+
+
+def update_config_from_yaml_config(cfg, yaml_config):
+    cfg.defrost()
+    # cfg._load_cfg_from_yaml_str(yaml_config)
+    a = CN(yaml_config)
+    # print(a)
+    # def merge_from_file(self, cfg_filename):
+    #     """Load a yaml config file and merge it this CfgNode."""
+    #     with open(cfg_filename, "r") as f:
+    #         cfg = self.load_cfg(f)
+    #     self.merge_from_other_cfg(cfg)
+    cfg.merge_from_other_cfg(a)
+    return cfg
 
 
 if __name__ == '__main__':

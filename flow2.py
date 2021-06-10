@@ -14,41 +14,49 @@ import os
 import pickle
 import torch
 from time import time
+import argparse
 
 from train_first import train_function, train_function2
-from libs.utils.yaml_config import init
-from training.config import update_config, config
+from libs.utils.yaml_config import init_v2
+# from training.config import update_config, config
 from create_pretext_pytorch import extract_feature
 from cluster_run import clustering
 from libs.relabeling import get_relabeling
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-
 
 def main():
     startinit = time()
-    args, logging = init("experiments/cifar10/flow2_resnet18_32.yaml")
-    update_config(config, args)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', '-c',
+                        dest="filename",
+                        metavar='FILE',
+                        help='path to the config file',
+                        default='experiments/cifar10/flow2_resnet18_v2.yaml')
+    args = parser.parse_args()
+    cfg, logging = init_v2(args.filename)
+    print(cfg['master_model_params'].GPUS)
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(cfg['master_model_params'].GPUS)
+    # update_config(config, args)
     doneinit = time()
     logging.info(f"<============> Init time: {round(doneinit - startinit, 2)} seconds")
     """
     + step 1: make new labels for the datatset by merging 2 classes into 1 randomly -> we got k classes.
     + step 2: train classifier with k classes."""
     # train
-    args.cluster_dataset = 'train'
-    args.pretrained_path = train_function2(args, config)
+    # args.cluster_dataset = 'train'
+    cfg['master_model_params'].TEST.pretrained_path = train_function2(cfg)
     done_firsttrain = time()
     logging.info(f"<============> First training time: {round(done_firsttrain - doneinit, 2)} seconds")
 
     """- step 3: extract feature and cluster the datatset by optimal number cluster algorithm."""
-    args.cluster_dataset = 'test'
-    extract_feature(args, config, logging, class_merging=True)
+    # args.cluster_dataset = 'test'
+    extract_feature(cfg, logging, class_merging=True)
     done_extract = time()
     logging.info(f"<============> Feature extraction time: {round(done_extract - done_firsttrain, 2)} seconds")
-    with open(args.fc1_path, 'rb') as f:
+    with open(cfg['pretext_params']['fc1_path'], 'rb') as f:
         data = pickle.load(f)
     logging.info('start clustering')
-    opt_clst = clustering(args, logging, data, org_eval=True)
+    opt_clst = clustering(cfg, logging, data, org_eval=True)
     done_clustering = time()
     logging.info(f"<============> Clustering time: {round(done_clustering - done_extract, 2)} seconds")
     # # logging.info(f'Optimal number of clusters: {opt_clst}')

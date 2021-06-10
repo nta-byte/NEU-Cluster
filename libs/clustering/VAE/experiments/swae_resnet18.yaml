@@ -1,7 +1,7 @@
 model_params:
   name: 'SWAE'
   n_genes: 512
-  latent_dim: 2
+  latent_dim: 10
   hidden_dims: [256]
 
 exp_params:
@@ -16,7 +16,7 @@ trainer_params:
   max_epochs: 500
   validate_epoch: 5
   batch_size: 6400
-  LR: 0.0001
+  LR: 0.001
   weight_decay: 0.0001
   scheduler_gamma: 0.95
   momentum: 0.9

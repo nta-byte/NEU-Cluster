@@ -4,13 +4,13 @@ from .neu_cls import DataPreprocess as neu_cls
 from .stl10 import DataPreprocess as stl10
 
 
-def get_data_preprocess(args):
-    if args.dataset == 'mlcc':
+def get_data_preprocess(cfg):
+    if cfg['master_model_params'].DATASET.DATASET == 'mlcc':
         return mlcc
-    elif args.dataset == 'cifar10':
+    elif cfg['master_model_params'].DATASET.DATASET == 'cifar10':
         return cifar10
-    elif args.dataset == 'stl10':
+    elif cfg['master_model_params'].DATASET.DATASET == 'stl10':
         return stl10
-    elif args.dataset == 'neu-cls':
+    elif cfg['master_model_params'].DATASET.DATASET == 'neu-cls':
         return neu_cls
 

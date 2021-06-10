@@ -77,27 +77,29 @@ def load_state(weight_path, net):
     return net
 
 
-def get_model(args, activation=False):
-    if args.model == 'RESNET50':
+def get_model(cfg, activation=False):
+    if cfg['master_model_params'].MODEL.NAME == 'resnet50':
         model = models.resnet.resnet50(pretrained=True)
         if not activation:
             model.fc = nn.Sequential()
         else:
             model.fc = nn.Linear(2048, 6)
-    elif args.model == 'RESNET18':
+    elif cfg['master_model_params'].MODEL.NAME == 'resnet18':
         model = models.resnet.resnet18(pretrained=True)
 
         if not activation:
             model.fc = nn.Sequential()
         else:
             model.fc = nn.Linear(512, 6)
-    elif args.model == 'VGG16':
+    elif cfg['master_model_params'].MODEL.NAME == 'vgg16':
         model = models.vgg16(pretrained=True)
         if not activation:
             model.classifier = nn.Sequential(*(list(model.classifier.children())[:1]))
-    if args.pretrained_path:
-        print("load weight:", args.pretrained_path)
-        model = load_state(args.pretrained_path, model)
+    else:
+        print(f" Model name {cfg['master_model_params'].MODEL.NAME} is not available")
+    if cfg['master_model_params'].TEST.pretrained_path:
+        print("load weight:", cfg['master_model_params'].TEST.pretrained_path)
+        model = load_state(cfg['master_model_params'].TEST.pretrained_path, model)
     return model
 
 

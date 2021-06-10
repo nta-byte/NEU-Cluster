@@ -15,21 +15,24 @@ from libs.pretext import get_data_preprocess
 from libs.pretext.cifar10 import DataPreprocessFlow4
 
 
-def extract_feature(args, config, logging, class_merging=False):
+def extract_feature(cfg, logging, class_merging=False):
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-    model = get_model(args, activation=False)
+    model = get_model(cfg, activation=False)
 
-    if args.reduce_dimension == 'vae':
-        tmp_cluster_dataset = args.cluster_dataset
-        args.cluster_dataset = 'train_test'
-        DataPreprocess = get_data_preprocess(args)
-        dp = DataPreprocess(args, config, class_merging=class_merging)
+    if cfg['reduce_dimension_params']['type'] == 'vae':
+        # tmp_cluster_dataset = cfg.cluster_dataset
+        # cfg.cluster_dataset = 'train_test'
+        DataPreprocess = get_data_preprocess(cfg)
+        dp = DataPreprocess(cfg, class_merging=True, shuffle_train=False,
+                            dataset_part=cfg['reduce_dimension_params']['dataset_part'])
+        # dp = DataPreprocess(cfg, class_merging=class_merging, )
         dp.infer(model, device)
         dp.save_pretext_for_vae()
-        args.cluster_dataset = tmp_cluster_dataset
-    DataPreprocess = get_data_preprocess(args)
-    dp = DataPreprocess(args, config, class_merging=class_merging)
+        # cfg.cluster_dataset = tmp_cluster_dataset
+    DataPreprocess = get_data_preprocess(cfg)
+    dp = DataPreprocess(cfg, class_merging=True, shuffle_train=False,
+                        dataset_part=cfg['pretext_params']['dataset_part'])
     # dp.evaluate(model, device)
     dp.infer(model, device)
     dp.save_output()
