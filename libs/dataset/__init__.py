@@ -23,6 +23,7 @@ from .cifar10 import DataPreprocess2 as cifar102
 # from .mlcc import DataPreprocess as mlcc
 # from .neu_cls import DataPreprocess as neu_cls
 from .stl10 import DataPreprocess as stl10
+from .stl10 import DataPreprocess2 as stl102
 
 
 def get_data_preprocess(cfg):
@@ -42,7 +43,7 @@ def get_data_preprocess2(cfg):
     elif cfg['master_model_params'].DATASET.DATASET == 'cifar10':
         return cifar102
     elif cfg['master_model_params'].DATASET.DATASET == 'stl10':
-        return stl10
+        return stl102
     elif cfg['master_model_params'].DATASET.DATASET == 'neu-cls':
         return neu_cls
 

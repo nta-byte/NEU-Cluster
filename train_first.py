@@ -29,7 +29,7 @@ from libs.dataset import get_data_preprocess2
 from training.utils.early_stoppping import EarlyStopping
 
 
-def train_function(cfg, step=1):
+def train_function(cfg, step=1, dataset_part=''):
     config = cfg['master_model_params']
     # preprocess
     clusters = config.DATASET.NUM_CLASSES
@@ -59,7 +59,7 @@ def train_function(cfg, step=1):
 
     # data prepare
     DataPreprocess = get_data_preprocess(cfg)
-    dp = DataPreprocess(cfg, step=step, dataset_part=cfg['relabel_params']['dataset_part'], shuffle_train=True)
+    dp = DataPreprocess(cfg, step=step, dataset_part=dataset_part, shuffle_train=True)
     train_loader, val_loader = dp.train_loader, dp.val_loader
 
     # data_preprocess = DataPreprocess(config, cfg, step=step)
@@ -77,7 +77,7 @@ def train_function(cfg, step=1):
 
     # initialize the early_stopping object
     save_best_model = os.path.join(save_dir, f"{config.MODEL.NAME}-best.pth")
-    early_stopping = EarlyStopping(patience=5, verbose=True, path=save_best_model)
+    early_stopping = EarlyStopping(patience=config.TRAIN.EarlyStopping, verbose=True, path=save_best_model)
 
     # train process
     total_step = len(train_loader)

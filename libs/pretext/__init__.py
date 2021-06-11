@@ -3,7 +3,7 @@ from .cifar10 import PretextCreater as cifar10
 
 # from .mlcc import PretextCreater as mlcc
 # from .neu_cls import PretextCreater as neu_cls
-# from .stl10 import PretextCreater as stl10
+from .stl10 import PretextCreater as stl10
 
 
 def get_PretextCreater(cfg):

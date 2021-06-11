@@ -108,6 +108,7 @@ master_model_params:
     RANDOM_CROP: true
     RESIZE: false
     VALIDATION_EPOCH: 2
+    EarlyStopping: 7
 
   TEST:
     IMAGE_SIZE:

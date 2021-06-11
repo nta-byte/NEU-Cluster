@@ -37,7 +37,8 @@ def main():
     logging.info(f"<============> Init time: {round(doneinit - startinit, 2)} seconds")
     os.environ["CUDA_VISIBLE_DEVICES"] = str(cfg['master_model_params'].GPUS)
     """- step 1 : We'll train our system with original train set."""
-    # cfg['master_model_params'].TEST.pretrained_path = train_function(cfg, step=1)
+    cfg['master_model_params'].TEST.pretrained_path = train_function(cfg, step=1,
+                                                                     dataset_part=cfg['1st_train_params']['dataset_part'])
     done_firsttrain = time()
     logging.info(f"<============> First training time: {round(done_firsttrain - doneinit, 2)} seconds")
 
@@ -79,7 +80,8 @@ def main():
         # config.TRAIN.FINETUNE = args.pretrained_path
         # config.TRAIN.BEGIN_EPOCH = 0
         # config.TRAIN.END_EPOCH = 100
-        train_function(cfg, step=3)
+        train_function(cfg, step=3,
+                       dataset_part=cfg['relabel_params']['dataset_part'])
     done_lasttrain = time()
     logging.info(f"<============> End training time: {round(done_lasttrain - done_relabel, 2)} seconds")
 
