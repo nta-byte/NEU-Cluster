@@ -61,6 +61,7 @@ _C.TRAIN.PRINT_FREQ = 20
 _C.TRAIN.DROPOUT = 0.2
 _C.TRAIN.RANDOM_CROP = True
 _C.TRAIN.RESIZE = False
+_C.TRAIN.EarlyStopping = 10
 
 # testing
 _C.TEST = CN()

@@ -11,8 +11,8 @@ from libs.utils.yaml_config import init
 from libs.dataset.preprocess import get_list_files
 # from libs.pretext.processing import DataPreprocess, get_model, infer
 from libs.pretext.utils import get_model
-from libs.pretext import get_data_preprocess
-from libs.pretext.cifar10 import DataPreprocessFlow4
+from libs.pretext import get_PretextCreater
+# from libs.pretext.cifar10 import DataPreprocessFlow4
 
 
 def extract_feature(cfg, logging, class_merging=False):
@@ -23,14 +23,14 @@ def extract_feature(cfg, logging, class_merging=False):
     if cfg['reduce_dimension_params']['type'] == 'vae':
         # tmp_cluster_dataset = cfg.cluster_dataset
         # cfg.cluster_dataset = 'train_test'
-        DataPreprocess = get_data_preprocess(cfg)
+        DataPreprocess = get_PretextCreater(cfg)
         dp = DataPreprocess(cfg, class_merging=True, shuffle_train=False,
                             dataset_part=cfg['reduce_dimension_params']['dataset_part'])
         # dp = DataPreprocess(cfg, class_merging=class_merging, )
         dp.infer(model, device)
         dp.save_pretext_for_vae()
         # cfg.cluster_dataset = tmp_cluster_dataset
-    DataPreprocess = get_data_preprocess(cfg)
+    DataPreprocess = get_PretextCreater(cfg)
     dp = DataPreprocess(cfg, class_merging=True, shuffle_train=False,
                         dataset_part=cfg['pretext_params']['dataset_part'])
     # dp.evaluate(model, device)

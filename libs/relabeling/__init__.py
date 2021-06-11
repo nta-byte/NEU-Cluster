@@ -4,12 +4,12 @@ from .stl10 import Relabel as stl10
 from .mlcc import Relabel as mlcc
 
 
-def get_relabeling(args):
-    if args.dataset == 'neu-cls':
-        return neu_cls
-    elif args.dataset == 'cifar10':
-        return cifar10
-    elif args.dataset == 'stl10':
-        return stl10
-    elif args.dataset == 'mlcc':
+def get_relabeling(cfg):
+    if cfg['master_model_params'].DATASET.DATASET == 'mlcc':
         return mlcc
+    elif cfg['master_model_params'].DATASET.DATASET == 'cifar10':
+        return cifar10
+    elif cfg['master_model_params'].DATASET.DATASET == 'stl10':
+        return stl10
+    elif cfg['master_model_params'].DATASET.DATASET == 'neu-cls':
+        return neu_cls
