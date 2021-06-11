@@ -1,0 +1,120 @@
+general:
+  save_dir: "output_save_flow1"
+  save_cluster_visualization: "cluster_visual"
+  first_train_dir: "1st_training"
+  last_train_dir: "last_training"
+  data_preprocess_path: ""
+  framework: "pytorch" # pytorch or tf
+  seed: 42
+
+1st_train_params:
+  dataset_part: "train"
+
+pretext_params:
+  le_path: "label_encoder.pkl" # label encoder model which converts string labels to integers.
+  fc1_dir: "raw_features"
+  label_transform_path: "label_transform.pkl"
+  dataset_part: "test"
+
+reduce_dimension_params:
+  type: "umap" # umap or pca or vae or none
+  dataset_part: "test" # train, test and train_test
+  vae_params:
+    model_params:
+      name: 'SWAE'
+      n_genes: 512
+      latent_dim: 10
+      hidden_dims: [256]
+    exp_params:
+      dataset: stl10
+      train_data_path: ""
+      val_data_path: ""
+    trainer_params:
+      resume: False
+      optimizer: adam # adam or sgd
+      gpus: '0'
+      max_epochs: 500
+      validate_epoch: 5
+      batch_size: 6400
+      LR: 0.001
+      weight_decay: 0.0001
+      scheduler_gamma: 0.95
+      momentum: 0.9
+    logging_params:
+      save_dir: "vae_ouput/stl10/"
+      name: "SWAE"
+      manual_seed: 1265
+    infer:
+      weight_path: "output_save_flow1/stl10_RESNET18_pretrain_reduce_dim_VAE_latent_dim_10_kmeanNinit100_pytorch_histeq_whitten/vae_ouput/stl10/SWAE-best.pth"
+
+  pca_params:
+    whitten: True
+    dims: 50
+  umap_params:
+    dims: 2
+
+
+clustering_params:
+  type: "kmean"
+  dataset_part: "test" # train, test and train_test
+  seed: 1234
+  kmean:
+    k_min: 3
+    k_max: 17
+    n_init: 50
+    cache_path: "kmeans_acc_vs_k.pickle"
+    use_cache: True
+
+relabel_params:
+  relabel_dir: "relabel"
+  dataset_part: "test"
+
+
+master_model_params:
+  GPUS: (0)
+  OUTPUT_DIR: 'output'
+  LOG_DIR: 'log'
+  WORKERS: 10
+
+  DATASET:
+    DATASET: 'stl10'
+    ROOT: '/mnt/data1/ntanh/data'
+    TEST_DIR: ''
+    VAL_DIR: ''
+    TRAIN_DIR: ''
+    NUM_CLASSES: 10
+    LE_PATH: ''
+    use_histeq: True
+
+  MODEL:
+    NAME: resnet18
+    PRETRAINED: true
+    HEAD: ''
+    BACKBONE: ''
+  #LOSS:
+
+  TRAIN:
+    FINETUNE: ''
+    IMAGE_SIZE:
+      - 96
+      - 96
+    BATCH_SIZE: 256
+    SHUFFLE: true
+    BEGIN_EPOCH: 0
+    END_EPOCH: 100
+    RESUME: true
+    OPTIMIZER: adam # adam or sgd
+    LR: 0.001
+    DROPOUT: 0.1
+    PRINT_FREQ: 100
+    RANDOM_CROP: true
+    RESIZE: false
+    VALIDATION_EPOCH: 2
+    EarlyStopping: 7
+
+  TEST:
+    IMAGE_SIZE:
+      - 96
+      - 96
+    BATCH_SIZE: 256
+    pretrained_path: "output_save_flow1/stl10_RESNET18_reduce_dim_UMAP_dims_2_kmeanNinit50_pytorch_histeq/1st_training/train_10_cluster/resnet18-best.pth"

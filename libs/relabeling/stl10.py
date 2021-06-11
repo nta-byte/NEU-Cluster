@@ -25,8 +25,8 @@ def write_csv(file_name, data_out):
 
 
 class Relabel:
-    def __init__(self, args, data, list_optimals=[]):
-        self.args = args
+    def __init__(self, cfg, data, list_optimals=[]):
+        self.cfg = cfg
         self.list_optimals = list_optimals
         # self.files = data['filename']  # file paths to each image
         self.fc1 = data['features']  # array containing fc1 features for each file
@@ -38,7 +38,7 @@ class Relabel:
         self.y_gt = self.le.transform(self.labels)  # integer labels for each image
 
     def load_state(self):
-        with open(self.args.kmeans_k_cache_path, 'rb') as f:
+        with open(self.cfg['clustering_params']['kmean']['cache_path'], 'rb') as f:
             results_ = pickle.load(f)
             self.kmeans_total = results_['kmean']
             self.k_values = results_['k_values']
@@ -70,30 +70,30 @@ class Relabel:
             new_le.update_mapper(cluster_mapper)
             # print(new_le.mapper)
             y_pred_2_label = new_le.inverse_transform(labels_unmatched_)
-            if self.args.cluster_dataset == 'train':
+            if self.cfg['relabel_params']['dataset_part'] == 'train':
                 out_train = y_pred_2_label
                 # out_test = y_pred_2_label[50000:]
-                with open(os.path.join(self.args.relabel_dir, str(k) + '_train.pkl'), 'wb') as f:
+                with open(os.path.join(self.cfg['relabel_params']['relabel_dir'], str(k) + '_train.pkl'), 'wb') as f:
                     pickle.dump(out_train, f)
-                with open(os.path.join(self.args.relabel_dir, str(k) + '_new_le.pkl'), 'wb') as f:
+                with open(os.path.join(self.cfg['relabel_params']['relabel_dir'], str(k) + '_new_le.pkl'), 'wb') as f:
                     pickle.dump(new_le, f)
 
-            if self.args.cluster_dataset == 'test':
+            if self.cfg['relabel_params']['dataset_part'] == 'test':
                 # out_train = y_pred_2_label
                 out_test = y_pred_2_label
-                with open(os.path.join(self.args.relabel_dir, str(k) + '_test.pkl'), 'wb') as f:
+                with open(os.path.join(self.cfg['relabel_params']['relabel_dir'], str(k) + '_test.pkl'), 'wb') as f:
                     pickle.dump(out_test, f)
-                with open(os.path.join(self.args.relabel_dir, str(k) + '_new_le.pkl'), 'wb') as f:
+                with open(os.path.join(self.cfg['relabel_params']['relabel_dir'], str(k) + '_new_le.pkl'), 'wb') as f:
                     pickle.dump(new_le, f)
 
-            elif self.args.cluster_dataset == 'train_test':
+            elif self.cfg['relabel_params']['dataset_part'] == 'train_test':
                 out_train = y_pred_2_label[:5000]
                 out_test = y_pred_2_label[8000:]
-                with open(os.path.join(self.args.relabel_dir, str(k) + '_train.pkl'), 'wb') as f:
+                with open(os.path.join(self.cfg['relabel_params']['relabel_dir'], str(k) + '_train.pkl'), 'wb') as f:
                     pickle.dump(out_train, f)
-                with open(os.path.join(self.args.relabel_dir, str(k) + '_test.pkl'), 'wb') as f:
+                with open(os.path.join(self.cfg['relabel_params']['relabel_dir'], str(k) + '_test.pkl'), 'wb') as f:
                     pickle.dump(out_test, f)
-                with open(os.path.join(self.args.relabel_dir, str(k) + '_new_le.pkl'), 'wb') as f:
+                with open(os.path.join(self.cfg['relabel_params']['relabel_dir'], str(k) + '_new_le.pkl'), 'wb') as f:
                     pickle.dump(new_le, f)
 
     def save_output(self):
