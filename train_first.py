@@ -125,7 +125,7 @@ def train_function(cfg, step=1, dataset_part=''):
     return save_best_model
 
 
-def train_function2(cfg):
+def train_function2(cfg, dataset_part='train'):
     # preprocess
     clusters = int(cfg['master_model_params'].DATASET.NUM_CLASSES / 2)
 
@@ -158,7 +158,7 @@ def train_function2(cfg):
     config.DATASET.NUM_CLASSES = len(dp.classes)
     model = get_model(cfg['master_model_params'])
     model = model.to(device)
-    # print(model)
+    print(model)
 
     # criteria prepare
     # Loss and optimizer
@@ -219,14 +219,14 @@ def train_function2(cfg):
     return smallest_loss_weight_path
 
 
-def train_function3(args, configuration):
+def train_function3(cfg, dataset_part='train'):
     # preprocess
-    clusters = int(configuration.DATASET.NUM_CLASSES)
+    clusters = int(cfg['master_model_params'].DATASET.NUM_CLASSES)
 
     # Init save dir
-    save_dir_root = args.save_first_train
-    save_dir = os.path.join(save_dir_root,
-                            f'train_{clusters}_cluster')
+    save_dir_root = cfg['general']['first_train_dir']
+    save_dir = os.path.join(save_dir_root, f'train_{clusters}_cluster')
+    config = cfg['master_model_params']
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
@@ -237,26 +237,30 @@ def train_function3(args, configuration):
         handlers=handlers,
         level=logging.INFO,
         format='%(asctime)s - %(levelname)s - %(message)s')
-    logging.info(args)
-    logging.info(configuration)
+    logging.info(cfg)
+    logging.info(cfg['master_model_params'])
 
     # Device configuration
-    device = torch.device('cuda:{}'.format(configuration.GPUS))
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(cfg['master_model_params'].GPUS)
+    device = torch.device('cuda:{}'.format(0))
 
     # data prepare
     # DataPreprocess = DataPreprocessFlow4(args)
-    dp = DataPreprocessFlow4(args, configuration, add_noise=args.add_noise)
+    DataPreprocess = get_data_preprocess2(cfg)
+    dp = DataPreprocess(cfg, noise=cfg['1st_train_params']['noise'], add_noise=cfg['1st_train_params']['add_noise'],
+                        shuffle_train=True,
+                        dataset_part=dataset_part)
     train_loader, val_loader = dp.train_loader, dp.val_loader
 
     # model prepare
     config.DATASET.NUM_CLASSES = len(dp.classes)
-    model = get_model(configuration)
+    model = get_model(config)
     model = model.to(device)
     # print(model)
 
     # criteria prepare
     # Loss and optimizer
-    optimizer, scheduler = get_optimizer(configuration, model)
+    optimizer, scheduler = get_optimizer(config, model)
     # print(optimizer)
     criterion = nn.CrossEntropyLoss()
 

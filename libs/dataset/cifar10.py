@@ -108,10 +108,24 @@ class DataPreprocess:
 
 
 class DataPreprocess2:
-    def __init__(self, cfg, class_merging=False, renew_merge=False, add_noise=.1, shuffle_train=False,
+    def __init__(self, cfg, noise='add_noise', renew_merge=False, add_noise=0., renew_noise=False, renew_drop=True,
+                 shuffle_train=False,
                  dataset_part='train'):
+        """
+        :param cfg:
+        :param noise: None|add_noise|class_merging|drop_class
+        :param renew_merge:
+        :param add_noise:
+        :param renew_noise:
+        :param shuffle_train:
+        :param dataset_part:
+        """
         self.cfg = cfg
+        self.noise = noise
+        self.addnoise = add_noise
+        self.renew_noise = renew_noise
         self.renew_merge = renew_merge
+        self.renew_drop = renew_drop
         self.dataset_part = dataset_part
         self.config = self.cfg['master_model_params']
         normalize = transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
@@ -144,22 +158,46 @@ class DataPreprocess2:
             self.org_labels = self.org_testlabel
         else:
             self.org_labels = np.concatenate((self.org_trainlabels, self.org_testlabel))
-
-        if class_merging:
+        print(self.noise)
+        # augment data
+        if self.noise == 'class_merging':
             if self.renew_merge:
-                self.label_transform = None
+                self.label_transform = {}
             else:
                 if os.path.isfile(self.cfg['pretext_params']['label_transform_path']):
                     print(f"reload self.label_transform in {self.cfg['pretext_params']['label_transform_path']}")
                     with open(self.cfg['pretext_params']['label_transform_path'], 'rb') as f:
                         self.label_transform = pickle.load(f)
                 else:
-                    self.label_transform = None
+                    self.label_transform = {}
 
-            trainset, testset = self.random_class_merging(trainset, testset)
+            trainset, testset = self.random_merge_class(trainset, testset)
 
-        if add_noise != 0:
-            self.create_noise()
+        elif self.noise == 'add_noise':
+            if self.renew_noise:
+                self.label_transform = {}
+            else:
+                if os.path.isfile(self.cfg['pretext_params']['label_transform_path']):
+                    print(f"reload self.label_transform in {self.cfg['pretext_params']['label_transform_path']}")
+                    with open(self.cfg['pretext_params']['label_transform_path'], 'rb') as f:
+                        self.label_transform = pickle.load(f)
+                else:
+                    self.label_transform = {}
+
+            trainset = self.create_noise(trainset)
+
+        elif self.noise == 'drop_class':
+            if self.renew_drop:
+                self.label_transform = {}
+            else:
+                if os.path.isfile(self.cfg['pretext_params']['label_transform_path']):
+                    print(f"reload self.label_transform in {self.cfg['pretext_params']['label_transform_path']}")
+                    with open(self.cfg['pretext_params']['label_transform_path'], 'rb') as f:
+                        self.label_transform = pickle.load(f)
+                else:
+                    self.label_transform = {}
+
+            trainset = self.random_drop_class(trainset)
 
         self.new_le = CustomLabelEncoder()
         self.new_le.mapper = trainset.class_to_idx
@@ -175,6 +213,15 @@ class DataPreprocess2:
         print('extract data set org label', set(self.org_labels))
         print('extract data set new label', set(self.new_labels))
 
+        if self.dataset_part == 'train':
+            train_len = int(len(trainset) * .8)
+            trainset, testset = torch.utils.data.random_split(trainset, [train_len, len(trainset) - train_len])
+            trainset, testset = trainset.dataset, testset.dataset
+        elif self.dataset_part == 'test':
+            train_len = int(len(testset) * .8)
+            trainset, testset = torch.utils.data.random_split(testset, [train_len, len(testset) - train_len])
+            trainset, testset = trainset.dataset, testset.dataset
+
         self.train_loader = torch.utils.data.DataLoader(trainset, batch_size=self.config.TRAIN.BATCH_SIZE,
                                                         shuffle=shuffle_train, num_workers=self.config.WORKERS)
 
@@ -182,14 +229,14 @@ class DataPreprocess2:
                                                       shuffle=False, num_workers=self.config.WORKERS)
         self.classes = trainset.classes
 
-    def random_class_merging(self, trainset=None, testset=None):
+    def random_merge_class(self, trainset=None, testset=None):
         class_to_idx = trainset.class_to_idx
         le = CustomLabelEncoder()
         le.mapper = class_to_idx
         trainlabels = le.inverse_transform(trainset.targets)
         testlabels = le.inverse_transform(testset.targets)
         print("start to merge classes")
-        if self.label_transform is None:
+        if self.label_transform == {}:
             print("create label_transform")
             self.label_transform = {'converted': {}, 'new_classes': None, 'new_class_to_idx': {},
                                     'new_le': CustomLabelEncoder()}
@@ -230,7 +277,151 @@ class DataPreprocess2:
         # print("self.args.label_transform_path", self.args.label_transform_path)
         return trainset, testset
 
+    def create_noise(self, trainset=None):
+        if 'new_noise_label' not in self.label_transform:
+            train_labels = np.asarray(trainset.targets)
+            ix_size = int(self.addnoise * len(train_labels))
+            ix = np.random.choice(len(train_labels), size=ix_size, replace=False)
+            b = train_labels[ix]
+            np.random.shuffle(b)
+            train_labels[ix] = b
+
+            # test_labels = np.asarray(testset.targets)
+            # ix_size = int(self.addnoise * len(test_labels))
+            # ix = np.random.choice(len(test_labels), size=ix_size, replace=False)
+            # b = test_labels[ix]
+            # np.random.shuffle(b)
+            # test_labels[ix] = b
+
+            new_noise_label = {'new_train_labels': train_labels}
+            self.label_transform['new_noise_label'] = new_noise_label
+
+            with open(Path(self.cfg['pretext_params']['label_transform_path']), 'wb') as f:
+                pickle.dump(self.label_transform, f)
+        else:
+            # test_labels = self.label_transform['new_noise_label']['new_test_labels']
+            train_labels = self.label_transform['new_noise_label']['new_train_labels']
+        # testset.targets = test_labels
+        trainset.targets = train_labels
+        return trainset
+
+    def random_drop_class(self, dataset):
+        if 'new_noise_label' not in self.label_transform:
+            train_labels = np.asarray(dataset.targets)
+            # ix_size = int(self.addnoise * len(train_labels))
+            original_class_name = list(dataset.class_to_idx.keys())
+            original_class_id = np.array(list(dataset.class_to_idx.values()))
+            dropping_class_name = random.choice(original_class_name)
+            dropping_class_id = dataset.class_to_idx[dropping_class_name]
+            print(original_class_name)
+            print("dropped class:", dropping_class_name, " id:", dropping_class_id)
+            ix = np.where(train_labels == dropping_class_id)
+            # print(np.array(list(dataset.class_to_idx.values())))
+            # print(set(ix))
+            dropped_label = np.delete(original_class_id, [dropping_class_id])
+            print(dropped_label)
+            # ix = np.random.choice(len(train_labels), size=ix_size, replace=False)
+            # b = train_labels[ix]
+            # np.random.shuffle(b)
+            train_labels[ix] = np.random.choice(dropped_label)
+            print(set(train_labels))
+
+            new_noise_label = {'new_train_labels': train_labels}
+            self.label_transform['new_noise_label'] = new_noise_label
+
+            with open(Path(self.cfg['pretext_params']['label_transform_path']), 'wb') as f:
+                pickle.dump(self.label_transform, f)
+        else:
+            train_labels = self.label_transform['new_noise_label']['new_train_labels']
+        dataset.targets = train_labels
+        return dataset
+
+
+class DataPreprocessFlow4:
+    def __init__(self, cfg, noise='add_noise', add_noise=0, active_data='train', renew_noise=False, decrease_dim=False):
+        self.noise = noise
+        self.addnoise = add_noise
+        self.cfg = cfg
+        self.config = self.cfg['master_model_params']
+        self.active_data = active_data
+        self.renew_noise = renew_noise
+        self.decrease_dim = decrease_dim
+        print(f"dataset: {self.args.dataset}")
+        normalize = transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+        transform_train = transforms.Compose([
+            transforms.Resize((self.config.TRAIN.IMAGE_SIZE[0], self.config.TRAIN.IMAGE_SIZE[1])),
+            transforms.RandomCrop(self.config.TRAIN.IMAGE_SIZE[0], padding=4),
+            transforms.RandomHorizontalFlip(),
+            # transforms.RandomVerticalFlip(),
+            transforms.ToTensor(),
+            normalize
+        ])
+
+        transform_val = transforms.Compose([
+            transforms.Resize((self.config.TRAIN.IMAGE_SIZE[0], self.config.TRAIN.IMAGE_SIZE[1])),
+            transforms.ToTensor(),  # 3*H*W, [0, 1]
+            normalize])
+        self.org_trainset = torchvision.datasets.CIFAR10(root=self.config.DATASET.ROOT, train=True,
+                                                         download=True, transform=transform_val,
+                                                         )
+
+        self.org_testset = torchvision.datasets.CIFAR10(root=self.config.DATASET.ROOT, train=False,
+                                                        download=True, transform=transform_val,
+                                                        )
+        self.original_le = CustomLabelEncoder()
+        self.original_le.mapper = self.org_trainset.class_to_idx
+
+        self.org_trainlabels = self.original_le.inverse_transform(self.org_trainset.targets)
+        self.org_testlabels = self.original_le.inverse_transform(self.org_testset.targets)
+
+        if add_noise != 0:
+            if self.renew_noise:
+                self.label_transform = None
+            else:
+                if os.path.isfile(self.args.label_transform_path):
+                    print(f'reload self.label_transform in {self.args.label_transform_path}')
+                    with open(self.args.label_transform_path, 'rb') as f:
+                        self.label_transform = pickle.load(f)
+                else:
+                    self.label_transform = None
+
+            self.create_noise()
+
+        # if class_merging:
+
+        self.new_trainlabels = self.original_le.inverse_transform(self.org_trainset.targets)
+
+        train_len = int(len(self.org_trainset) * .8)
+        trainset, valset = torch.utils.data.random_split(self.org_trainset,
+                                                         [train_len, len(self.org_trainset) - train_len])
+        valset.dataset.transform = transform_val
+        trainset.dataset.transform = transform_train
+
+        self.org_trainloader = torch.utils.data.DataLoader(self.org_trainset, batch_size=self.config.TRAIN.BATCH_SIZE,
+                                                           shuffle=False, num_workers=self.config.WORKERS)
+
+        self.train_loader = torch.utils.data.DataLoader(trainset, batch_size=self.config.TRAIN.BATCH_SIZE,
+                                                        shuffle=True, num_workers=self.config.WORKERS)
+        self.val_loader = torch.utils.data.DataLoader(valset, batch_size=self.config.TEST.BATCH_SIZE,
+                                                      shuffle=False, num_workers=self.config.WORKERS)
+        self.test_loader = torch.utils.data.DataLoader(self.org_testset, batch_size=self.config.TEST.BATCH_SIZE,
+                                                       shuffle=False, num_workers=self.config.WORKERS)
+        self.classes = self.org_trainset.classes
+
     def create_noise(self):
+        if self.label_transform is None:
+            self.label_transform = self.org_trainset.targets
+            self.label_transform = np.asarray(self.label_transform)
+            ix_size = int(self.addnoise * len(self.label_transform))
+            ix = np.random.choice(len(self.label_transform), size=ix_size, replace=False)
+            b = self.label_transform[ix]
+            np.random.shuffle(b)
+            self.label_transform[ix] = b
+            with open(Path(self.args.label_transform_path), 'wb') as f:
+                pickle.dump(self.label_transform, f)
+        self.org_trainset.targets = self.label_transform
+
+    def drop_class(self):
         pass
 
 

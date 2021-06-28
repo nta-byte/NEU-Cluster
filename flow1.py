@@ -37,8 +37,7 @@ def main():
     logging.info(f"<============> Init time: {round(doneinit - startinit, 2)} seconds")
     os.environ["CUDA_VISIBLE_DEVICES"] = str(cfg['master_model_params'].GPUS)
     """- step 1 : We'll train our system with original train set."""
-    cfg['master_model_params'].TEST.pretrained_path = train_function(cfg, step=1,
-                                                                     dataset_part=cfg['1st_train_params']['dataset_part'])
+    # cfg['master_model_params'].TEST.pretrained_path = train_function(cfg, step=1, dataset_part=cfg['1st_train_params']['dataset_part'])
     done_firsttrain = time()
     logging.info(f"<============> First training time: {round(done_firsttrain - doneinit, 2)} seconds")
 

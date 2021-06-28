@@ -156,19 +156,11 @@ class Relabel_flow4:
                     print(set(y_clusters))
                     for idx, value in enumerate(np.unique(y_clusters)):
                         cluster_mapper['{}-{}'.format(self.le.inverse_transform([p])[0], idx)] = value
-
-                # for p in np.unique(y_pred_):
-                #     y_clusters = kmeans.labels_[y_pred_ == p]
-                #     for idx, value in enumerate(np.unique(y_clusters)):
-                #         cluster_mapper['{}-{}'.format(self.le.inverse_transform([p])[0], idx)] = value
                 print(cluster_mapper)
                 new_le = ct.CustomLabelEncoder()
                 new_le.update_mapper(cluster_mapper)
-                # print(new_le.mapper)
                 y_pred_2_label = new_le.inverse_transform(labels_unmatched_)
-                # if self.args.cluster_dataset == 'train':
                 out_train = y_pred_2_label
-                # out_test = y_pred_2_label[50000:]
                 with open(os.path.join(self.args.relabel_dir, str(k) + '_train.pkl'), 'wb') as f:
                     pickle.dump(out_train, f)
                 with open(os.path.join(self.args.relabel_dir, str(k) + '_new_le.pkl'), 'wb') as f:

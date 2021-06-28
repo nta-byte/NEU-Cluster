@@ -13,6 +13,7 @@
 import os
 import pickle
 import torch
+import torch.backends.cudnn as cudnn
 from time import time
 import argparse
 
@@ -31,7 +32,7 @@ def main():
                         dest="filename",
                         metavar='FILE',
                         help='path to the config file',
-                        default='experiments/cifar10/flow2_resnet50_v2.yaml')
+                        default='experiments/cifar10/flow2_resnet18_v2.yaml')
     args = parser.parse_args()
     cfg, logging = init_v2(args.filename)
     print(cfg['master_model_params'].GPUS)
@@ -41,7 +42,8 @@ def main():
     """
     + step 1: make new labels for the datatset by merging 2 classes into 1 randomly -> we got k classes.
     + step 2: train classifier with k classes."""
-    # cfg['master_model_params'].TEST.pretrained_path = train_function2(cfg)
+    cfg['master_model_params'].TEST.pretrained_path = train_function2(cfg,
+                                                                      dataset_part=cfg['1st_train_params']['dataset_part'])
     done_firsttrain = time()
     logging.info(f"<============> First training time: {round(done_firsttrain - doneinit, 2)} seconds")
 
@@ -83,7 +85,7 @@ def main():
         # cfg['master_model_params'].TRAIN.LR = 0.01
         # cfg['master_model_params'].TRAIN.BEGIN_EPOCH = 0
         # cfg['master_model_params'].TRAIN.END_EPOCH = 20
-        train_function(cfg, step=3)
+        train_function(cfg, step=3, dataset_part=cfg['relabel_params']['dataset_part'])
     done_lasttrain = time()
     logging.info(f"<============> Total Running time: {round(done_lasttrain - startinit, 2)} seconds")
 

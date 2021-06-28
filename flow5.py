@@ -45,7 +45,7 @@ def main():
                         dest="filename",
                         metavar='FILE',
                         help='path to the config file',
-                        default='experiments/cifar10/flow4_resnet18_v2.yaml')
+                        default='experiments/cifar10/flow5_resnet18_v2.yaml')
     args = parser.parse_args()
     cfg, logging = init_v2(args.filename)
     doneinit = time()

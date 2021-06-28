@@ -72,13 +72,15 @@ from libs.dataset.cifar10 import DataPreprocess2
 
 
 class PretextCreater:
-    def __init__(self, cfg, class_merging=False, renew_merge=False, add_noise=.1, shuffle_train=False,
+    def __init__(self, cfg, noise='add_noise', renew_merge=False, add_noise=.1, renew_noise=False, shuffle_train=False,
                  dataset_part='train'):
         self.cfg = cfg
+        self.noise = noise
         self.renew_merge = renew_merge
         self.dataset_part = dataset_part
         self.config = self.cfg['master_model_params']
-        self.dp = DataPreprocess2(self.cfg, class_merging=class_merging, renew_merge=renew_merge, add_noise=add_noise,
+        self.dp = DataPreprocess2(self.cfg, noise=self.noise, renew_merge=renew_merge, add_noise=add_noise,
+                                  renew_noise=renew_noise,
                                   shuffle_train=shuffle_train, dataset_part=dataset_part)
         self.train_loader = self.dp.train_loader
         self.val_loader = self.dp.val_loader

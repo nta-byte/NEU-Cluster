@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import skimage.io
+import faiss
 from sklearn.manifold import TSNE
 import seaborn as sns
 
@@ -118,8 +119,12 @@ def pretty_cm(cm, labelnames, cscale=0.6, ax0=None, fs=6, cmap='cool'):
 
 
 def visual(y_pred, kmeans, le, x_nw, save_name, cluster):
-    tsne = TSNE(n_components=2, random_state=12214)
-    x_nw_tsne = tsne.fit_transform(x_nw)
+    # tsne = TSNE(n_components=2, random_state=12214)
+    # x_nw_tsne = tsne.fit_transform(x_nw)
+    _, s1 = x_nw.shape
+    if s1 != 2:
+        tsne = TSNE(n_components=2, random_state=12214)
+        x_nw = tsne.fit_transform(x_nw)
     cluster_mapper = {}
     for p in np.unique(y_pred):
         y_clusters = kmeans.labels_[y_pred == p]
@@ -130,7 +135,124 @@ def visual(y_pred, kmeans, le, x_nw, save_name, cluster):
     hue_order = sorted(cluster_mapper.values(), key=lambda x: x.upper())
 
     fig, ax = plt.subplots(dpi=300, figsize=(5, 5))
+    sns.scatterplot(x_nw[:, 0], x_nw[:, 1], hue=hue, hue_order=hue_order,
+                    palette=dict(zip(hue_order, palette)), ax=ax)
+    ax.legend(loc='upper center', bbox_to_anchor=(1, 1))
+    plt.savefig(save_name)
+    # plt.show()
+
+# def visual(y_pred, labels_unmatched, le, x_nw, save_name, cluster):
+#     # from MulticoreTSNE import MulticoreTSNE as TSNE
+#     if not isinstance(y_pred, np.ndarray):
+#         y_pred = np.array(y_pred)
+#     if not isinstance(labels_unmatched, np.ndarray):
+#         labels_unmatched = np.array(labels_unmatched)
+#     tsne = TSNE(n_components=2, random_state=12214)
+#     x_nw_tsne = tsne.fit_transform(x_nw)
+#     cluster_mapper = {}
+#     for p in np.unique(y_pred):
+#         y_clusters = labels_unmatched[y_pred == p]
+#         for idx, value in enumerate(np.unique(y_clusters)):
+#             cluster_mapper[value] = '{}-{}'.format(le.inverse_transform([p])[0], idx)
+#     palette = np.concatenate((sns.color_palette('pastel', cluster), sns.color_palette('dark', cluster)), axis=0)
+#     hue = [cluster_mapper[x] for x in labels_unmatched]
+#     hue_order = sorted(cluster_mapper.values(), key=lambda x: x.upper())
+#
+#     fig, ax = plt.subplots(dpi=300, figsize=(5, 5))
+#     sns.scatterplot(x_nw_tsne[:, 0], x_nw_tsne[:, 1], hue=hue, hue_order=hue_order,
+#                     palette=dict(zip(hue_order, palette)), ax=ax)
+#     ax.legend(loc='upper center', bbox_to_anchor=(1, 1))
+#     plt.savefig(save_name)
+#     # plt.show()
+
+
+def visual_(y_pred, labels_unmatched, le, x_nw, save_name, cluster):
+    if not isinstance(y_pred, np.ndarray):
+        y_pred = np.array(y_pred)
+    if not isinstance(labels_unmatched, np.ndarray):
+        labels_unmatched = np.array(labels_unmatched)
+    _, s1 = x_nw.shape
+    if s1 != 2:
+        tsne = TSNE(n_components=2, random_state=12214)
+        x_nw = tsne.fit_transform(x_nw)
+    # x_nw_tsne = tsne.fit_transform(x_nw)
+    cluster_mapper = {}
+    for p in np.unique(y_pred):
+        y_clusters = labels_unmatched[y_pred == p]
+        for idx, value in enumerate(np.unique(y_clusters)):
+            cluster_mapper[value] = '{}-{}'.format(le.inverse_transform([p])[0], idx)
+    palette = np.concatenate((sns.color_palette('pastel', cluster), sns.color_palette('dark', cluster)), axis=0)
+    hue = [cluster_mapper[x] for x in labels_unmatched]
+    hue_order = sorted(cluster_mapper.values(), key=lambda x: x.upper())
+
+    fig, ax = plt.subplots(dpi=300, figsize=(5, 5))
+    sns.scatterplot(x_nw[:, 0], x_nw[:, 1], hue=hue, hue_order=hue_order,
+                    palette=dict(zip(hue_order, palette)), ax=ax)
+    ax.legend(loc='upper center', bbox_to_anchor=(1, 1))
+    plt.savefig(save_name)
+
+
+def visual_tsne_pytorch(y_pred, labels_unmatched, le, x_nw, save_name, cluster):
+    if not isinstance(y_pred, np.ndarray):
+        y_pred = np.array(y_pred)
+    if not isinstance(labels_unmatched, np.ndarray):
+        labels_unmatched = np.array(labels_unmatched)
+    # from MulticoreTSNE import MulticoreTSNE as TSNE
+    from tsne_torch import TorchTSNE as TSNE
+    tsne = TSNE(n_components=2, perplexity=30, n_iter=100, verbose=True)
+    a = np.array_split(x_nw, 5)
+    list_tsne = []
+    for i in a:
+        print(i.shape)
+        i_tsne = tsne.fit_transform(i)
+        list_tsne.append(i_tsne)
+    x_nw_tsne = np.concatenate(list_tsne, axis=0)
+    print(x_nw_tsne.shape)
+    print(labels_unmatched)
+    cluster_mapper = {}
+    for p in np.unique(y_pred):
+        y_clusters = labels_unmatched[y_pred == p]
+        for idx, value in enumerate(np.unique(y_clusters)):
+            cluster_mapper[value] = '{}-{}'.format(le.inverse_transform([p])[0], idx)
+    palette = np.concatenate((sns.color_palette('pastel', cluster), sns.color_palette('dark', cluster)), axis=0)
+    hue = [cluster_mapper[x] for x in labels_unmatched]
+    hue_order = sorted(cluster_mapper.values(), key=lambda x: x.upper())
+
+    fig, ax = plt.subplots(dpi=300, figsize=(5, 5))
     sns.scatterplot(x_nw_tsne[:, 0], x_nw_tsne[:, 1], hue=hue, hue_order=hue_order,
+                    palette=dict(zip(hue_order, palette)), ax=ax)
+    ax.legend(loc='upper center', bbox_to_anchor=(1, 1))
+    plt.savefig(save_name)
+    # plt.show()
+
+
+def visual_gpu(y_pred, labels_unmatched, le, x_nw, save_name, cluster):
+    if not isinstance(y_pred, np.ndarray):
+        y_pred = np.array(y_pred)
+    if not isinstance(labels_unmatched, np.ndarray):
+        labels_unmatched = np.array(labels_unmatched)
+    print(x_nw.shape)
+    _, ndim = x_nw.shape
+    npdata = x_nw.astype('float32')
+
+    # Apply PCA-whitening with Faiss
+    mat = faiss.PCAMatrix(ndim, 2)
+    mat.train(npdata)
+    assert mat.is_trained
+    npdata = mat.apply_py(npdata)
+    # tsne = TSNE(n_components=2, random_state=12214)
+    # x_nw_tsne = tsne.fit_transform(x_nw)
+    cluster_mapper = {}
+    for p in np.unique(y_pred):
+        y_clusters = labels_unmatched[y_pred == p]
+        for idx, value in enumerate(np.unique(y_clusters)):
+            cluster_mapper[value] = '{}-{}'.format(le.inverse_transform([p])[0], idx)
+    palette = np.concatenate((sns.color_palette('pastel', cluster), sns.color_palette('dark', cluster)), axis=0)
+    hue = [cluster_mapper[x] for x in labels_unmatched]
+    hue_order = sorted(cluster_mapper.values(), key=lambda x: x.upper())
+
+    fig, ax = plt.subplots(dpi=300, figsize=(5, 5))
+    sns.scatterplot(npdata[:, 0], npdata[:, 1], hue=hue, hue_order=hue_order,
                     palette=dict(zip(hue_order, palette)), ax=ax)
     ax.legend(loc='upper center', bbox_to_anchor=(1, 1))
     plt.savefig(save_name)

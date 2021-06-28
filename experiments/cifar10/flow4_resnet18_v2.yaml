@@ -1,5 +1,5 @@
 general:
-  save_dir: "output_save_flow1"
+  save_dir: "output_save_flow4"
   save_cluster_visualization: "cluster_visual"
   first_train_dir: "1st_training"
   last_train_dir: "last_training"
@@ -9,6 +9,8 @@ general:
 
 1st_train_params:
   dataset_part: "train"
+  noise: "add_noise" #None|add_noise|class_merging|drop_class
+  add_noise: 0.1
 
 pretext_params:
   le_path: "label_encoder.pkl" # label encoder model which converts string labels to integers.
@@ -61,7 +63,7 @@ clustering_params:
   kmean:
     k_min: 3
     k_max: 17
-    n_init: 50
+    n_init: 500
     cache_path: "kmeans_acc_vs_k.pickle"
     use_cache: False
 
@@ -71,7 +73,7 @@ relabel_params:
 
 
 master_model_params:
-  GPUS: (0)
+  GPUS: (1)
   OUTPUT_DIR: 'output'
   LOG_DIR: 'log'
   WORKERS: 10
@@ -117,4 +119,4 @@ master_model_params:
       - 32
       - 32
     BATCH_SIZE: 256
-    pretrained_path: "/home/ntanh/ntanh/SDC_SALa_Clustering/CODE/deepcluster/Output/resnet18_Kmeans_20clusters/nmi_0.7652784727545836.pth"
+    pretrained_path: "output_save_flow4/cifar10_RESNET18_reduce_dim_UMAP_dims_2_kmeanNinit50_pytorch_histeq/1st_training/train_10_cluster/resnet18-Epoch-56-Loss-0.157-Acc-0.94.pth"

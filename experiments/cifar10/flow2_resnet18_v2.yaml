@@ -7,6 +7,8 @@ general:
   framework: "pytorch" # pytorch or tf
   seed: 42
 
+1st_train_params:
+  dataset_part: "train"
 
 pretext_params:
   le_path: "label_encoder.pkl" # label encoder model which converts string labels to integers.
@@ -115,7 +117,7 @@ master_model_params:
       - 32
       - 32
     BATCH_SIZE: 256
-    pretrained_path: "output_save_flow2/cifar10_RESNET18_reduce_dim_UMAP_dims_2_kmeanNinit50_pytorch_histeq/1st_training/train_5_cluster/resnet18-Epoch-10-Loss-0.37-Acc-0.87.pth"
+    pretrained_path: "output_save_flow2/cifar10_RESNET18_reduce_dim_UMAP_dims_2_kmeanNinit50_pytorch_histeq/1st_training/train_5_cluster/resnet18-Epoch-12-Loss-0.375-Acc-0.87.pth"
 
 #model_params:
 #
