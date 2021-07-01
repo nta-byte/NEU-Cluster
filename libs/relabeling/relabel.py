@@ -1,18 +1,12 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 import os
 import csv
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
-from sklearn.metrics import *
-
-from kneed import KneeLocator
 
 from libs.helper import classification_tools as ct
-from libs.helper.visualize import visual
 from libs.utils.yaml_config import init
-from create_pretext_pytorch import extract_feature
 
 
 def write_csv(file_name, data_out):

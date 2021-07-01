@@ -10,11 +10,11 @@
 from time import time
 import os
 import pickle
-from train_first import train_function
+from train import train_function
 from libs.utils.yaml_config import init
 from training.config import update_config, config
-from create_pretext_pytorch import extract_feature
-from cluster_run import clustering
+from libs.pretext.create_pretext_pytorch import extract_feature
+from libs.clustering.cluster_run import clustering
 from libs.relabeling import get_relabeling
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"

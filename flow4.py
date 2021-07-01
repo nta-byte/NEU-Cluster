@@ -18,21 +18,19 @@ Step4 ) Test - 10,000 w/ original gt labels is used for clustering w/ extracting
 
 import os
 import pickle
-import torch
 from time import time
 import argparse
-from train_first import train_function, train_function3
 # from libs.utils.yaml_config import init
 # from training.config import update_config, config
-from create_pretext_pytorch import extract_feature_flow4
+from libs.pretext.create_pretext_pytorch import extract_feature_flow4
 # from cluster_run import clustering_flow4
 # from libs.relabeling.cifar10 import Relabel_flow4
 
-# from train_first import train_function, train_function2
+from train import train_function, train_function2, train_function3
 from libs.utils.yaml_config import init_v2
 # from training.config import update_config, config
 # from create_pretext_pytorch import extract_feature
-from cluster_run import clustering, gpu_clustering
+from libs.clustering.cluster_run import gpu_clustering
 
 
 # from libs.relabeling import get_relabeling
@@ -49,6 +47,7 @@ def main():
     args = parser.parse_args()
     cfg, logging = init_v2(args.filename)
     doneinit = time()
+    os.environ["CUDA_VISIBLE_DEVICES"] = str(cfg['master_model_params'].GPUS)
     logging.info(f"<============> Init time: {round(doneinit - startinit, 2)} seconds")
 
     """
@@ -68,7 +67,7 @@ def main():
     with open(cfg['pretext_params']['fc1_path'], 'rb') as f:
         data = pickle.load(f)
     logging.info('start clustering')
-    opt_clst = clustering(cfg, logging, data, org_eval=True, kmeans_step=1)
+    opt_clst = gpu_clustering(cfg, logging, data, org_eval=True, kmeans_step=1)
     # # fc1_test_file =
     # fc1_test_file = os.path.join(args.fc1_dir, f'{args.model}_fc1_test_features_std.pickle')
     # with open(fc1_test_file, 'rb') as f:

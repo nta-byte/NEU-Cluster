@@ -19,7 +19,7 @@ pretext_params:
   dataset_part: "test"
 
 reduce_dimension_params:
-  type: "umap" # umap or pca or vae or none
+  type: "none" # umap or pca or vae or none
   dataset_part: "test" # train, test and train_test
   vae_params:
     model_params:
@@ -61,8 +61,8 @@ clustering_params:
   dataset_part: "test" # train, test and train_test
   seed: 1234
   kmean:
-    k_min: 3
-    k_max: 17
+    k_min: 8
+    k_max: 13
     n_init: 500
     cache_path: "kmeans_acc_vs_k.pickle"
     use_cache: False

@@ -16,15 +16,13 @@ Step4 ) Test - 10,000 w/ original gt labels is used for clustering w/ extracting
     get clustering evaluation metrics
 """
 
-import os
 import pickle
-import torch
 from time import time
 import argparse
-from train_first import train_function, train_function3
+from train import train_function3
 # from libs.utils.yaml_config import init
 # from training.config import update_config, config
-from create_pretext_pytorch import extract_feature_flow4
+from libs.pretext.create_pretext_pytorch import extract_feature_flow4
 # from cluster_run import clustering_flow4
 # from libs.relabeling.cifar10 import Relabel_flow4
 
@@ -32,7 +30,7 @@ from create_pretext_pytorch import extract_feature_flow4
 from libs.utils.yaml_config import init_v2
 # from training.config import update_config, config
 # from create_pretext_pytorch import extract_feature
-from cluster_run import clustering, gpu_clustering
+from libs.clustering.cluster_run import clustering
 
 
 # from libs.relabeling import get_relabeling

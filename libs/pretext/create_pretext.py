@@ -8,7 +8,7 @@ from tensorflow.keras.applications.vgg16 import preprocess_input
 from libs.helper import CustomLabelEncoder
 
 from libs.dataset.preprocess import get_list_files
-from create_pretext_pytorch import init
+from libs.pretext.create_pretext_pytorch import init
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 #
